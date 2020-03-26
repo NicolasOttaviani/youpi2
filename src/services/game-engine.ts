@@ -13,7 +13,7 @@ export interface GameEngineCallbacks {
   refresh: (positions: Position[]) => void
 }
 
-const { Engine, Bodies, World, Events, Body, Vector } = Matter
+const { Engine, Bodies, World, Events, Body } = Matter
 const borderOptions: IChamferableBodyDefinition = {
   isStatic: true,
   restitution: 0.9,
@@ -30,8 +30,8 @@ const goal2Options: IChamferableBodyDefinition = {
 }
 const playerOptions: IChamferableBodyDefinition = {
   slop: 0,
-  frictionAir: 1,
-  inverseInertia: 0,
+  frictionAir: 0.05,
+  mass: 80,
 }
 const ballOptions: IChamferableBodyDefinition = {
   label: 'ball',
