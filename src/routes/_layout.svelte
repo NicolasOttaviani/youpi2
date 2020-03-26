@@ -1,22 +1,14 @@
 <script>
-	import Nav from '../components/Nav.svelte';
-
-	export let segment;
+  import Login from '../components/Login.svelte'
+  let logged = false
 </script>
 
-<style>
-	main {
-		position: relative;
-		max-width: 56em;
-		background-color: white;
-		padding: 2em;
-		margin: 0 auto;
-		box-sizing: border-box;
-	}
-</style>
+<svelte:head>
+  <title>Youpi 2 - Login</title>
+</svelte:head>
 
-<Nav {segment}/>
-
-<main>
-	<slot></slot>
-</main>
+{#if !logged}
+  <Login on:login={() => (logged = true)} />
+{:else}
+  <slot />
+{/if}

@@ -4,15 +4,25 @@ Little football game.
 
 ## Getting started
 
-### Running the project
-
-However you get the code, you can install dependencies and run the project in development mode with:
+### Install the project
 
 ```bash
-cd youpi2
-yarn install 
+git clone https://github.com/NicolasOttaviani/youpi2.git
+yarn install
+```
+
+### Running the project
+
+```bash
 yarn run dev
 ```
 
 Open up [localhost:3000](http://localhost:3000) and start clicking around.
 
+### Running test
+
+```bash
+yarn run test
+```
+
+Open up [localhost:3000](http://localhost:3000) and start clicking around.

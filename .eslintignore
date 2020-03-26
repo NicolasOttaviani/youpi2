@@ -1,0 +1,7 @@
+node_modules
+coverage
+*.config.js
+__sapper__
+src/client.js
+src/server.js
+src/service-worker.js

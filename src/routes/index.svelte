@@ -1,46 +1,33 @@
-<style>
-	h1, figure, p {
-		text-align: center;
-		margin: 0 auto;
-	}
+<script lang="ts">
+  import { setContext } from 'svelte'
+  import Chat from '../components/Chat.svelte'
+  import Ground from '../components/Ground.svelte'
+  import GameSelect from '../components/GameSelect.svelte'
+  import { running } from '../components/stores'
+  let showConfig = false
+  setContext('lock', {})
+</script>
 
-	h1 {
-		font-size: 2.8em;
-		text-transform: uppercase;
-		font-weight: 700;
-		margin: 0 0 0.5em 0;
-	}
-
-	figure {
-		margin: 0 0 1em 0;
-	}
-
-	img {
-		width: 100%;
-		max-width: 400px;
-		margin: 0 0 1em 0;
-	}
-
-	p {
-		margin: 1em auto;
-	}
-
-	@media (min-width: 480px) {
-		h1 {
-			font-size: 4em;
-		}
-	}
+<style lang="scss">
+  .modal {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: white;
+  }
 </style>
 
 <svelte:head>
-	<title>Sapper project template</title>
+  <title>Youpi 2</title>
 </svelte:head>
 
-<h1>Great success!</h1>
+{#if !$running || showConfig}
+  <div class="modal">
+    <GameSelect on:back={() => (showConfig = false)} />
+    <Chat />
+  </div>
+{/if}
 
-<figure>
-	<img alt='Borat' src='great-success.png'>
-	<figcaption>HIGH FIVE!</figcaption>
-</figure>
-
-<p><strong>Try editing this file (src/routes/index.svelte) to test live reloading.</strong></p>
+<div>
+  <Ground on:config={() => (showConfig = true)} />
+</div>
