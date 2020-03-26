@@ -140,7 +140,7 @@ export function game(io: Server) {
     }
 
     function createPlayer(index: number) {
-      const callback = ({ movementX, movementY }: Movement) => {
+      const callback = ([movementX, movementY]: number[]) => {
         if (engine) {
           engine.move(index, movementX, movementY)
         }

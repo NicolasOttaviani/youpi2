@@ -116,7 +116,7 @@ export function emit(message: string) {
 
 export function move(movementX: number, movementY: number) {
   if (!socket || !get(isPlaying)) return
-  socket.emit('game move', { movementX, movementY })
+  socket.emit('game move', [movementX, movementY])
 }
 
 export function pickPlayer(index: number) {
