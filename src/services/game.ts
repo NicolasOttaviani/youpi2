@@ -56,7 +56,10 @@ export function game(io: Server) {
             engine = undefined
           },
           refresh(positions) {
-            io.emit('game refresh', positions)
+            io.emit(
+              'game refresh',
+              positions.map(p => [Math.round(p.x), Math.round(p.y)]).flat(),
+            )
           },
         },
         defaultOpts,

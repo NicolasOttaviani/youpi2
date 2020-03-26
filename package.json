@@ -13,6 +13,9 @@
     "prettier": "prettier '**/*.{js,ts,svelte,json,md,css,pcss}'",
     "format": "run-s \"prettier --write\" \"lint --fix\""
   },
+  "engines": {
+    "node": "13.x"
+  },
   "dependencies": {
     "body-parser": "^1.19.0",
     "compression": "^1.7.1",

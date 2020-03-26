@@ -91,9 +91,19 @@ export function connect(user: string) {
     .on('game stop', () => {
       stopEngine()
     })
-    .on('game refresh', (newPositions: Position[]) => {
+    .on('game refresh', (newPositions: number[]) => {
       lastInfo.positions.splice(0, lastInfo.positions.length)
-      lastInfo.positions = newPositions
+      const base: Position[] = []
+      lastInfo.positions = newPositions.reduce(
+        (result, value, index, array) => {
+          if (index % 2 === 0) {
+            const [x, y] = array.slice(index, index + 2)
+            result.push({ x, y })
+          }
+          return result
+        },
+        base,
+      )
     })
     .on('game winner', (team: string) => {
       stopEngine()
