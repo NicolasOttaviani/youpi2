@@ -43,6 +43,7 @@ export function game(io: Server) {
     })
     socket.on('game start', () => {
       if (engine) return
+      let frameCount = 0
       engine = gameEngine(
         currentGround,
         {
@@ -56,10 +57,13 @@ export function game(io: Server) {
             engine = undefined
           },
           refresh(positions) {
-            io.emit(
-              'game refresh',
-              positions.map(p => [Math.round(p.x), Math.round(p.y)]).flat(),
-            )
+            frameCount = (frameCount + 1) % 2
+            if (frameCount === 0) {
+              io.emit(
+                'game refresh',
+                positions.map(p => [Math.round(p.x), Math.round(p.y)]).flat(),
+              )
+            }
           },
         },
         defaultOpts,
