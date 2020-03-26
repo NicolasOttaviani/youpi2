@@ -118,7 +118,7 @@
       {#each $messages as { timestamp, user, message }}
         <li>
           <b>@{user}</b>
-          : message
+          : {message}
           <time>({fromNow(timestamp)})</time>
         </li>
       {/each}
