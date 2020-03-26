@@ -14,32 +14,6 @@ export interface GameEngineCallbacks {
 }
 
 const { Engine, Bodies, World, Events, Body } = Matter
-const borderOptions: IChamferableBodyDefinition = {
-  isStatic: true,
-  restitution: 0.9,
-  friction: 1,
-  slop: 0,
-}
-const goal1Options: IChamferableBodyDefinition = {
-  label: 'team2',
-  isStatic: true,
-}
-const goal2Options: IChamferableBodyDefinition = {
-  label: 'team1',
-  isStatic: true,
-}
-const playerOptions: IChamferableBodyDefinition = {
-  slop: 0,
-  frictionAir: 0.05,
-  mass: 80,
-}
-const ballOptions: IChamferableBodyDefinition = {
-  label: 'ball',
-  restitution: 0.5,
-  friction: 0,
-  frictionAir: 0.02,
-  slop: 0,
-}
 
 export interface Score {
   team1: number
@@ -59,11 +33,38 @@ export function gameEngine(
   options: GameEngineOptions,
 ): GameEngine {
   const { goal, winner, refresh } = callbacks
-  const { force, maxGoal } = options
+  const { maxGoal } = options
+
+  const borderOptions: IChamferableBodyDefinition = {
+    isStatic: true,
+    restitution: options.border.restitution,
+    friction: options.border.friction,
+    slop: 0,
+  }
+  const goal1Options: IChamferableBodyDefinition = {
+    label: 'team2',
+    isStatic: true,
+  }
+  const goal2Options: IChamferableBodyDefinition = {
+    label: 'team1',
+    isStatic: true,
+  }
+  const playerOptions: IChamferableBodyDefinition = {
+    slop: 0,
+    frictionAir: options.player.frictionAir,
+    mass: options.player.mass,
+  }
+  const ballOptions: IChamferableBodyDefinition = {
+    label: 'ball',
+    restitution: options.ball.restitution,
+    frictionAir: options.ball.frictionAir,
+    slop: 0,
+  }
+
   const engine = Engine.create({ velocityIterations: 16 })
   const world = engine.world
   world.gravity = { x: 0, y: 0, scale: 1 }
-  const { players, ball } = drawGround(ground, world)
+  const { players, ball } = drawGround(ground, world, options.player.force)
   const defaultPositions = {
     ball: { ...ball.position },
     players: players.map(({ body }) => ({ ...body.position })),
@@ -185,6 +186,38 @@ export function gameEngine(
       Body.setAngularVelocity(body, 0)
     })
   }
+  function drawGround(ground: Ground, world: WorldClass, force: number) {
+    const all: BodyClass[] = []
+    ground.borders.forEach(elem => draw(all, elem, borderOptions))
+    const goal1 = draw(all, ground.goal1, goal1Options)
+    const goal2 = draw(all, ground.goal2, goal2Options)
+    const ball = draw(all, ground.ball, ballOptions)
+    const players = ground.players.map(
+      elem => new Player(draw(all, elem, playerOptions), force),
+    )
+    World.add(world, all)
+    return { goal1, goal2, players, ball }
+  }
+
+  function draw(
+    bodies: BodyClass[],
+    elem: Block,
+    options: IChamferableBodyDefinition,
+  ) {
+    let body: BodyClass | undefined
+    if (elem.rect) {
+      const { x, y, w, h } = elem.rect
+      body = Bodies.rectangle(x + w / 2, y + h / 2, w, h, options)
+    } else if (elem.circle) {
+      const { x, y, r } = elem.circle
+      body = Bodies.circle(x, y, r, options)
+    }
+    if (!body) {
+      throw new Error('Could not find rect or circle ?!')
+    }
+    bodies.push(body)
+    return body
+  }
 }
 
 interface Keys {
@@ -196,9 +229,11 @@ interface Keys {
 
 class Player {
   body: BodyClass
+  force: number
   keys: Keys = { up: false, down: false, left: false, right: false }
-  constructor(body: BodyClass) {
+  constructor(body: BodyClass, force: number) {
     this.body = body
+    this.force = force
   }
   keyPress(code: number) {
     if (code === KEYS.LEFT) this.keys.left = true
@@ -216,45 +251,11 @@ class Player {
     this.keys = { up: false, down: false, left: false, right: false }
   }
   update() {
-    const force = { x: 0, y: 0 }
-    const add = 0.05
-    if (this.keys.left) force.x = force.x - add
-    if (this.keys.right) force.x = force.x + add
-    if (this.keys.up) force.y = force.y - add
-    if (this.keys.down) force.y = force.y + add
-    Body.applyForce(this.body, this.body.position, force)
+    const forceVector = { x: 0, y: 0 }
+    if (this.keys.left) forceVector.x = forceVector.x - this.force
+    if (this.keys.right) forceVector.x = forceVector.x + this.force
+    if (this.keys.up) forceVector.y = forceVector.y - this.force
+    if (this.keys.down) forceVector.y = forceVector.y + this.force
+    Body.applyForce(this.body, this.body.position, forceVector)
   }
-}
-
-function drawGround(ground: Ground, world: WorldClass) {
-  const all: BodyClass[] = []
-  ground.borders.forEach(elem => draw(all, elem, borderOptions))
-  const goal1 = draw(all, ground.goal1, goal1Options)
-  const goal2 = draw(all, ground.goal2, goal2Options)
-  const ball = draw(all, ground.ball, ballOptions)
-  const players = ground.players.map(
-    elem => new Player(draw(all, elem, playerOptions)),
-  )
-  World.add(world, all)
-  return { goal1, goal2, players, ball }
-}
-
-function draw(
-  bodies: BodyClass[],
-  elem: Block,
-  options: IChamferableBodyDefinition,
-) {
-  let body: BodyClass | undefined
-  if (elem.rect) {
-    const { x, y, w, h } = elem.rect
-    body = Bodies.rectangle(x + w / 2, y + h / 2, w, h, options)
-  } else if (elem.circle) {
-    const { x, y, r } = elem.circle
-    body = Bodies.circle(x, y, r, options)
-  }
-  if (!body) {
-    throw new Error('Could not find rect or circle ?!')
-  }
-  bodies.push(body)
-  return body
 }

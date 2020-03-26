@@ -32,10 +32,22 @@ export interface Movement {
 
 export interface GameEngineOptions {
   maxGoal: number
-  force: number
   width: number
   height: number
   margin: number
+  player: {
+    force: number
+    frictionAir: number
+    mass: number
+  }
+  border: {
+    restitution: number
+    friction: number
+  }
+  ball: {
+    restitution: number
+    frictionAir: number
+  }
 }
 export interface GroundOptions {
   width: number

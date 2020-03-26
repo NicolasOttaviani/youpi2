@@ -5,7 +5,19 @@ import { ground } from './ground'
 
 const defaultOpts: Options = {
   maxGoal: 2,
-  force: 0.01,
+  player: {
+    force: 0.05,
+    frictionAir: 0.05,
+    mass: 80,
+  },
+  ball: {
+    restitution: 0.5,
+    frictionAir: 0.02,
+  },
+  border: {
+    restitution: 0.9,
+    friction: 0.2,
+  },
   height: 600,
   width: 1800,
   ballRadius: 20,
