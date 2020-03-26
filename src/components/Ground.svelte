@@ -2,7 +2,7 @@
   import { get } from 'svelte/store'
   import { getContext, createEventDispatcher } from 'svelte'
   import { startRender } from './ground-canvas'
-  import { move, lastInfo, isPlaying } from './stores'
+  import { lastInfo, isPlaying, keyPress, keyRelease } from './stores'
   const { width, height } = lastInfo.options
   const lock = getContext('lock')
   const dispatch = createEventDispatcher()
@@ -24,9 +24,15 @@
     lock.requestPointerLock = requestPointerLock
     lock.exitPointerLock = exitPointerLock
 
-    function mousemove({ movementX, movementY }: MouseEvent) {
+    function onKeyPress({ keyCode }: KeyboardEvent) {
       if (canMove) {
-        move(movementX, movementY)
+        keyPress(keyCode)
+      }
+    }
+
+    function onKeyRelease({ keyCode }: KeyboardEvent) {
+      if (canMove) {
+        keyRelease(keyCode)
       }
     }
 
@@ -35,12 +41,14 @@
     }
     document.addEventListener('pointerlockchange', unlock)
     canvas.addEventListener('click', requestPointerLock)
-    canvas.addEventListener('mousemove', mousemove)
+    document.addEventListener('keydown', onKeyPress)
+    document.addEventListener('keyup', onKeyRelease)
     return {
       destroy() {
         render.destroy()
         canvas.removeEventListener('click', requestPointerLock)
-        canvas.removeEventListener('mousemove', mousemove)
+        document.removeEventListener('keydown', onKeyPress)
+        document.removeEventListener('keyup', onKeyRelease)
         document.removeEventListener('pointerlockchange', unlock)
       },
     }

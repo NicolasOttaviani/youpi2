@@ -72,3 +72,19 @@ export interface Circle {
   y: number
   r: number
 }
+
+export const KEYS = {
+  LEFT: 37,
+  UP: 38,
+  RIGHT: 39,
+  DOWN: 40,
+}
+
+export const IS_A_KEYS = (key: number) => {
+  return (
+    key === KEYS.DOWN ||
+    key === KEYS.UP ||
+    key === KEYS.RIGHT ||
+    key === KEYS.LEFT
+  )
+}

@@ -8,6 +8,7 @@ import {
   Ground,
   Position,
   Options,
+  IS_A_KEYS,
 } from '../types'
 import { onDestroy } from 'svelte'
 
@@ -79,7 +80,6 @@ export function connect(user: string) {
       players.set(newPlayers)
     })
     .on('game start', () => {
-      console.log('start', !socket, get(running))
       winner.set(undefined)
       running.set(true)
       score.set(initScore)
@@ -91,7 +91,7 @@ export function connect(user: string) {
     .on('game stop', () => {
       stopEngine()
     })
-    .on('game refresh', (newPositions: number[]) => {
+    .on('r', (newPositions: number[]) => {
       lastInfo.positions.splice(0, lastInfo.positions.length)
       const base: Position[] = []
       lastInfo.positions = newPositions.reduce(
@@ -124,9 +124,16 @@ export function emit(message: string) {
   socket.emit('message', message)
 }
 
-export function move(movementX: number, movementY: number) {
+export function keyPress(code: number) {
   if (!socket || !get(isPlaying)) return
-  socket.emit('game move', [movementX, movementY])
+  if (!IS_A_KEYS(code)) return
+  socket.emit('game keypress', code)
+}
+
+export function keyRelease(code: number) {
+  if (!socket || !get(isPlaying)) return
+  if (!IS_A_KEYS(code)) return
+  socket.emit('game keyrelease', code)
 }
 
 export function pickPlayer(index: number) {

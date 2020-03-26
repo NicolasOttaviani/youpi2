@@ -1,4 +1,4 @@
-import { Ground, Block, GameEngineOptions, Position } from '../types'
+import { Ground, Block, GameEngineOptions, Position, KEYS } from '../types'
 import {
   default as Matter,
   IEventCollision,
@@ -47,9 +47,10 @@ export interface Score {
 }
 
 export interface GameEngine {
-  move(index: number, movementX: number, movementY: number): void
   destroy(): void
   getScore(): Score
+  keyPress(index: number, code: number): void
+  keyRelease(index: number, code: number): void
 }
 
 export function gameEngine(
@@ -65,7 +66,7 @@ export function gameEngine(
   const { players, ball } = drawGround(ground, world)
   const defaultPositions = {
     ball: { ...ball.position },
-    players: players.map(({ position }) => ({ ...position })),
+    players: players.map(({ body }) => ({ ...body.position })),
   }
   const score: Score = {
     team1: 0,
@@ -73,20 +74,26 @@ export function gameEngine(
   }
   Engine.run(engine)
   Events.on(engine, 'beforeUpdate', handleBeforeUpdate)
+  Events.on(engine, 'afterUpdate', handleAfterUpdate)
   Events.on(engine, 'collisionStart', handleCollision)
 
   return {
-    move(index: number, movementX: number, movementY: number) {
+    keyPress(index, code) {
       const player = players[index]
       if (!player) throw new Error(`Could not find player index '${index}`)
-      const vector = { x: movementX * force, y: movementY * force }
-      Body.applyForce(player, player.position, vector)
+      player.keyPress(code)
+    },
+    keyRelease(index, code) {
+      const player = players[index]
+      if (!player) throw new Error(`Could not find player index '${index}`)
+      player.keyRelease(code)
     },
     getScore() {
       return score
     },
     destroy() {
       Events.off(engine, 'beforeUpdate', handleBeforeUpdate)
+      Events.off(engine, 'afterUpdate', handleAfterUpdate)
       Events.off(engine, 'collisionStart', handleCollision)
     },
   }
@@ -120,7 +127,10 @@ export function gameEngine(
 
   function handleBeforeUpdate() {
     clampPositions()
-    refresh([ball.position, ...players.map(({ position }) => position)])
+  }
+
+  function handleAfterUpdate() {
+    refresh([ball.position, ...players.map(({ body }) => body.position)])
   }
 
   function clampPositions() {
@@ -134,7 +144,10 @@ export function gameEngine(
     }
     Body.setVelocity(ball, ballVelocity)
     clampPosition(ball)
-    players.forEach(clampPosition)
+    players.forEach(player => {
+      player.update()
+      clampPosition(player.body)
+    })
   }
 
   function clampPosition(body: BodyClass) {
@@ -166,11 +179,50 @@ export function gameEngine(
     Body.setVelocity(ball, { x: 0, y: 0 })
     Body.setAngularVelocity(ball, 0)
     defaultPositions.players.forEach((position, index) => {
-      const player = players[index]
-      Body.setPosition(player, position)
-      Body.setVelocity(player, { x: 0, y: 0 })
-      Body.setAngularVelocity(player, 0)
+      const { body } = players[index]
+      Body.setPosition(body, position)
+      Body.setVelocity(body, { x: 0, y: 0 })
+      Body.setAngularVelocity(body, 0)
     })
+  }
+}
+
+interface Keys {
+  up: boolean
+  down: boolean
+  left: boolean
+  right: boolean
+}
+
+class Player {
+  body: BodyClass
+  keys: Keys = { up: false, down: false, left: false, right: false }
+  constructor(body: BodyClass) {
+    this.body = body
+  }
+  keyPress(code: number) {
+    if (code === KEYS.LEFT) this.keys.left = true
+    else if (code === KEYS.RIGHT) this.keys.right = true
+    else if (code === KEYS.DOWN) this.keys.down = true
+    else if (code === KEYS.UP) this.keys.up = true
+  }
+  keyRelease(code: number) {
+    if (code === KEYS.LEFT) this.keys.left = false
+    else if (code === KEYS.RIGHT) this.keys.right = false
+    else if (code === KEYS.DOWN) this.keys.down = false
+    else if (code === KEYS.UP) this.keys.up = false
+  }
+  releaseAll() {
+    this.keys = { up: false, down: false, left: false, right: false }
+  }
+  update() {
+    const force = { x: 0, y: 0 }
+    const add = 0.05
+    if (this.keys.left) force.x = force.x - add
+    if (this.keys.right) force.x = force.x + add
+    if (this.keys.up) force.y = force.y - add
+    if (this.keys.down) force.y = force.y + add
+    Body.applyForce(this.body, this.body.position, force)
   }
 }
 
@@ -180,7 +232,9 @@ function drawGround(ground: Ground, world: WorldClass) {
   const goal1 = draw(all, ground.goal1, goal1Options)
   const goal2 = draw(all, ground.goal2, goal2Options)
   const ball = draw(all, ground.ball, ballOptions)
-  const players = ground.players.map(elem => draw(all, elem, playerOptions))
+  const players = ground.players.map(
+    elem => new Player(draw(all, elem, playerOptions)),
+  )
   World.add(world, all)
   return { goal1, goal2, players, ball }
 }

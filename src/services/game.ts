@@ -1,4 +1,4 @@
-import { Options, Movement, Hello } from '../types'
+import { Options, Hello } from '../types'
 import { Server } from 'socket.io'
 import { GameEngine, gameEngine } from './game-engine'
 import { ground } from './ground'
@@ -60,7 +60,7 @@ export function game(io: Server) {
             frameCount = (frameCount + 1) % 2
             if (frameCount === 0) {
               io.emit(
-                'game refresh',
+                'r',
                 positions.map(p => [Math.round(p.x), Math.round(p.y)]).flat(),
               )
             }
@@ -147,16 +147,23 @@ export function game(io: Server) {
     }
 
     function createPlayer(index: number) {
-      const callback = ([movementX, movementY]: number[]) => {
+      const callbackKeyPress = (code: number) => {
         if (engine) {
-          engine.move(index, movementX, movementY)
+          engine.keyPress(index, code)
         }
       }
-      socket.on('game move', callback)
+      const callbackKeyRelease = (code: number) => {
+        if (engine) {
+          engine.keyRelease(index, code)
+        }
+      }
+      socket.on('game keypress', callbackKeyPress)
+      socket.on('game keyrelease', callbackKeyRelease)
       return {
         user,
         destroy() {
-          socket.removeListener('game move', callback)
+          socket.removeListener('game keypress', callbackKeyPress)
+          socket.removeListener('game keyrelease', callbackKeyRelease)
         },
       }
     }
