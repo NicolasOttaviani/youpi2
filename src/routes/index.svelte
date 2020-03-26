@@ -3,9 +3,10 @@
   import Chat from '../components/Chat.svelte'
   import Ground from '../components/Ground.svelte'
   import GameSelect from '../components/GameSelect.svelte'
-  import { running } from '../components/stores'
+  import { running, configure } from '../components/stores'
   let showConfig = false
   setContext('lock', {})
+  configure()
 </script>
 
 <style lang="scss">

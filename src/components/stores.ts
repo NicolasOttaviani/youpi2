@@ -8,8 +8,8 @@ import {
   Ground,
   Position,
   Options,
-  Movement,
 } from '../types'
+import { onDestroy } from 'svelte'
 
 export interface LastInfo {
   user: string
@@ -18,10 +18,14 @@ export interface LastInfo {
   positions: Position[]
 }
 
-interface Socket {
-  on(event: string, callback: (...data: any) => void): Socket
+interface Emitter {
+  on(event: string, callback: (...data: any) => void): Emitter
   emit(event: string, ...data: any): void
-  removeListener(event: string, callback: (...data: any) => void): void
+  removeListener(event: string, callback: (...data: any) => void): Emitter
+}
+
+interface Socket extends Emitter {
+  close(): void
 }
 
 const initScore = {
@@ -128,4 +132,11 @@ export function start() {
 export function stop() {
   if (!socket || !get(running)) return
   socket.emit('game stop')
+}
+
+export function configure() {
+  onDestroy(() => {
+    if (!socket) return
+    socket.close()
+  })
 }
