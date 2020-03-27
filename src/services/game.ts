@@ -8,15 +8,18 @@ const defaultOpts: Options = {
   player: {
     force: 0.05,
     frictionAir: 0.05,
-    mass: 80,
+    mass: 40,
+    spaceMass: 80,
+    inertia: 0,
   },
   ball: {
+    mass: 1,
     restitution: 0.5,
     frictionAir: 0.02,
   },
   border: {
-    restitution: 0.9,
-    friction: 0.2,
+    restitution: 0.2,
+    friction: 0,
   },
   height: 600,
   width: 1800,

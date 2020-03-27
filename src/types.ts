@@ -36,9 +36,11 @@ export interface GameEngineOptions {
   height: number
   margin: number
   player: {
+    spaceMass: number
     force: number
     frictionAir: number
     mass: number
+    inertia: number
   }
   border: {
     restitution: number
@@ -47,6 +49,7 @@ export interface GameEngineOptions {
   ball: {
     restitution: number
     frictionAir: number
+    mass: number
   }
 }
 export interface GroundOptions {
@@ -90,6 +93,7 @@ export const KEYS = {
   UP: 38,
   RIGHT: 39,
   DOWN: 40,
+  SHOOT: 32,
 }
 
 export const IS_A_KEYS = (key: number) => {
@@ -97,6 +101,7 @@ export const IS_A_KEYS = (key: number) => {
     key === KEYS.DOWN ||
     key === KEYS.UP ||
     key === KEYS.RIGHT ||
-    key === KEYS.LEFT
+    key === KEYS.LEFT ||
+    key === KEYS.SHOOT
   )
 }

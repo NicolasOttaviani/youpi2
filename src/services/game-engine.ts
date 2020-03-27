@@ -5,6 +5,8 @@ import {
   IChamferableBodyDefinition,
   Body as BodyClass,
   World as WorldClass,
+  IPair,
+  Constraint as ConstraintClass,
 } from 'matter-js'
 
 export interface GameEngineCallbacks {
@@ -13,7 +15,7 @@ export interface GameEngineCallbacks {
   refresh: (positions: Position[]) => void
 }
 
-const { Engine, Bodies, World, Events, Body } = Matter
+const { Engine, Bodies, World, Events, Body, Vector, Constraint } = Matter
 
 export interface Score {
   team1: number
@@ -34,7 +36,6 @@ export function gameEngine(
 ): GameEngine {
   const { goal, winner, refresh } = callbacks
   const { maxGoal } = options
-
   const borderOptions: IChamferableBodyDefinition = {
     isStatic: true,
     restitution: options.border.restitution,
@@ -53,6 +54,7 @@ export function gameEngine(
     slop: 0,
     frictionAir: options.player.frictionAir,
     mass: options.player.mass,
+    inertia: options.player.inertia,
   }
   const ballOptions: IChamferableBodyDefinition = {
     label: 'ball',
@@ -73,6 +75,8 @@ export function gameEngine(
     team1: 0,
     team2: 0,
   }
+  const toBeMovedNextFrame: Position[] = []
+
   Engine.run(engine)
   Events.on(engine, 'beforeUpdate', handleBeforeUpdate)
   Events.on(engine, 'afterUpdate', handleAfterUpdate)
@@ -100,30 +104,54 @@ export function gameEngine(
   }
 
   function handleCollision(event: IEventCollision<void>) {
-    const pairs = event.pairs
-    pairs.forEach(pair => {
-      const type: string = pair.bodyA.label
-      const containsPuck = pair.bodyB.label === ballOptions.label
-      const contaisGoal =
-        type === goal1Options.label || type === goal2Options.label
-      if (containsPuck && contaisGoal) {
-        let newScore: number
-        if (type === goal2Options.label) {
-          score.team1 += 1
-          newScore = score.team1
-        } else {
-          score.team2 += 1
-          newScore = score.team2
+    event.pairs.forEach(pair => {
+      handleGoalCollistion(pair)
+      handleBallCollision(pair)
+    })
+  }
+
+  function handleBallCollision(pair: IPair) {
+    const typeA: string = pair.bodyA.label
+    const typeB: string = pair.bodyB.label
+
+    if (typeA === ballOptions.label) {
+      if (typeB.indexOf('player') > -1) {
+        const index = parseInt(typeB.substring(6))
+        const player = players[index]
+        if (player.keys.shoot) {
+          const force = 0.1
+          const deltaVector = Vector.sub(ball.position, player.body.position)
+          const normalizedDelta = Vector.normalise(deltaVector)
+          const forceVector = Vector.mult(normalizedDelta, force)
+          toBeMovedNextFrame.push(forceVector)
         }
+      }
+    }
+  }
+
+  function handleGoalCollistion(pair: IPair) {
+    const typeA: string = pair.bodyA.label
+    const typeB: string = pair.bodyB.label
+    let newScore: number | undefined
+
+    if (typeB === ballOptions.label) {
+      if (typeA === goal2Options.label) {
+        score.team1 += 1
+        newScore = score.team1
+      } else if (typeA === goal1Options.label) {
+        score.team2 += 1
+        newScore = score.team2
+      }
+      if (newScore !== undefined) {
         if (newScore >= maxGoal) {
-          winner(type)
+          winner(typeA)
           return
         }
         handleTableReset()
         handleBeforeUpdate()
-        goal(type)
+        goal(typeA)
       }
-    })
+    }
   }
 
   function handleBeforeUpdate() {
@@ -144,6 +172,11 @@ export function gameEngine(
       ballVelocity.y = clamp
     }
     Body.setVelocity(ball, ballVelocity)
+    toBeMovedNextFrame.forEach(pos => {
+      Body.applyForce(ball, ball.position, pos)
+    })
+    toBeMovedNextFrame.splice(0, toBeMovedNextFrame.length)
+
     clampPosition(ball)
     players.forEach(player => {
       player.update()
@@ -187,20 +220,35 @@ export function gameEngine(
     })
   }
   function drawGround(ground: Ground, world: WorldClass, force: number) {
-    const all: BodyClass[] = []
+    const all: (BodyClass | ConstraintClass)[] = []
     ground.borders.forEach(elem => draw(all, elem, borderOptions))
     const goal1 = draw(all, ground.goal1, goal1Options)
     const goal2 = draw(all, ground.goal2, goal2Options)
     const ball = draw(all, ground.ball, ballOptions)
-    const players = ground.players.map(
-      elem => new Player(draw(all, elem, playerOptions), force),
-    )
-    World.add(world, all)
+    const players = ground.players.map((elem, index) => {
+      const label = `player${index}`
+      const body = draw(all, elem, { ...playerOptions, label })
+      if (!elem.circle) {
+        throw new Error('Oh no, i need to implement rectangle player')
+      }
+      const sensorElem = {
+        circle: { x: elem.circle.x, y: elem.circle.y, r: elem.circle.r + 10 },
+      }
+      const sensor = draw(all, sensorElem, {
+        isSensor: true,
+        label,
+      })
+
+      all.push(Constraint.create({ bodyA: body, bodyB: sensor }))
+
+      return new Player(body, force)
+    })
+    World.add(world, all as any)
     return { goal1, goal2, players, ball }
   }
 
   function draw(
-    bodies: BodyClass[],
+    bodies: (BodyClass | ConstraintClass)[],
     elem: Block,
     options: IChamferableBodyDefinition,
   ) {
@@ -225,12 +273,20 @@ interface Keys {
   down: boolean
   left: boolean
   right: boolean
+  shoot: boolean
+}
+const defaultKeys = {
+  up: false,
+  down: false,
+  left: false,
+  right: false,
+  shoot: false,
 }
 
 class Player {
   body: BodyClass
   force: number
-  keys: Keys = { up: false, down: false, left: false, right: false }
+  keys: Keys = { ...defaultKeys }
   constructor(body: BodyClass, force: number) {
     this.body = body
     this.force = force
@@ -240,15 +296,17 @@ class Player {
     else if (code === KEYS.RIGHT) this.keys.right = true
     else if (code === KEYS.DOWN) this.keys.down = true
     else if (code === KEYS.UP) this.keys.up = true
+    else if (code === KEYS.SHOOT) this.keys.shoot = true
   }
   keyRelease(code: number) {
     if (code === KEYS.LEFT) this.keys.left = false
     else if (code === KEYS.RIGHT) this.keys.right = false
     else if (code === KEYS.DOWN) this.keys.down = false
     else if (code === KEYS.UP) this.keys.up = false
+    else if (code === KEYS.SHOOT) this.keys.shoot = false
   }
   releaseAll() {
-    this.keys = { up: false, down: false, left: false, right: false }
+    this.keys = { ...defaultKeys }
   }
   update() {
     const forceVector = { x: 0, y: 0 }
