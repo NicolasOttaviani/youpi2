@@ -11,10 +11,19 @@
 
 <style lang="scss">
   .modal {
-    position: absolute;
-    width: 100%;
-    height: 100%;
+    position: fixed;
+    width: 10Ovw;
+    height: 100vh;
     background: white;
+    .container {
+      position: Z;
+      display: grid;
+      width: 100vw;
+      height: 100vh;
+      min-width: 0;
+      min-height: 0;
+      grid-template-rows: 420px auto;
+    }
   }
 </style>
 
@@ -24,8 +33,10 @@
 
 {#if !$running || showConfig}
   <div class="modal">
-    <GameSelect on:back={() => (showConfig = false)} />
-    <Chat />
+    <div class="container">
+      <GameSelect on:back={() => (showConfig = false)} />
+      <Chat />
+      </div>
   </div>
 {/if}
 
