@@ -40,6 +40,7 @@ export const players: Writable<Players> = writable([])
 export const score: Writable<Score> = writable(initScore)
 export const running: Writable<boolean> = writable(false)
 export const winner: Writable<string | undefined> = writable(undefined)
+export const ready: Writable<boolean> = writable(false)
 export const isPlaying = derived(players, players => {
   if (!socket || !players) return undefined
   const player = players.find(p => p === lastInfo.user)
@@ -111,12 +112,19 @@ export function connect(user: string) {
       winner.set(team)
     })
 
+  onDestroy(() => {
+    if (!socket) return
+    socket.close()
+  })
   return new Promise((resolve, reject) => {
     if (!socket) {
       reject()
       return
     }
-    socket.on('hello', ({ ground }: Hello) => resolve(ground))
+    socket.on('hello', ({ ground }: Hello) => {
+      resolve(ground)
+      ready.set(true)
+    })
   })
 }
 
@@ -150,11 +158,4 @@ export function start() {
 export function stop() {
   if (!socket || !get(running)) return
   socket.emit('game stop')
-}
-
-export function configure() {
-  onDestroy(() => {
-    if (!socket) return
-    socket.close()
-  })
 }

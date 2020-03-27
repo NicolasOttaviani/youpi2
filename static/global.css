@@ -1,5 +1,13 @@
 @import url(https://fonts.googleapis.com/css?family=Vibur);
 
+:root {
+  --accent: #009688;
+  --primary: #ffca28;
+  --secondary: #ffa726;
+  --background: #383c4a;
+  --font: 'Vibur', cursive;
+}
+
 * {
   box-sizing: border-box;
   -moz-box-sizing: border-box;
@@ -13,11 +21,11 @@ body {
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
   font-size: 14px;
   line-height: 1.5;
-  color: #333;
-}
-
-#sapper {
-  position: relative;
+  color: #a3a3a3;
+  background-color: var(--background);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
 }
 
 h1,
@@ -26,28 +34,22 @@ h3,
 h4,
 h5,
 h6 {
-  margin: 0 0 0.5em 0;
-  font-weight: 400;
-  line-height: 1.2;
+  margin: 0 0 0 0;
+  font-weight: normal;
+  line-height: 1;
 }
 
 h1 {
-  font-size: 2em;
+  color: var(--primary);
+  text-align: center;
+  font-size: 50px;
+  margin-bottom: 0.5em;
+  font-family: var(--font);
 }
 
 a {
   color: inherit;
 }
-
-code {
-  font-family: menlo, inconsolata, monospace;
-  font-size: calc(1em - 2px);
-  color: #555;
-  background-color: #f0f0f0;
-  padding: 0.2em 0.4em;
-  border-radius: 2px;
-}
-
 @media (min-width: 400px) {
   body {
     font-size: 16px;
