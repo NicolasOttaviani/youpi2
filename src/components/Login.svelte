@@ -1,46 +1,24 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from 'svelte'
-  import { connect } from './stores'
+  import { createEventDispatcher } from 'svelte'
   const dispatch = createEventDispatcher()
-  const dev = process.env.NODE_ENV === 'notdevelopment'
   let user = ''
 
   async function submit() {
     if (user !== '') {
-      await connect(user)
-      dispatch('login')
+      dispatch('login', user)
     }
   }
-  onMount(() => {
-    const login = getParameterByName('login')
-    if (login) {
-      user = login
-      submit()
-    }
-  })
 
-  function getParameterByName(name, url) {
-    if (!url) url = window.location.href
-    name = name.replace(/[\[\]]/g, '\\$&')
-    var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-      results = regex.exec(url)
-    if (!results) return null
-    if (!results[2]) return ''
-    return decodeURIComponent(results[2].replace(/\+/g, ' '))
-  }
 </script>
 
 <style lang="scss">
   .login {
+    position: relative;
     width: 550px;
     padding: 40px 30px;
     background: #eee;
     border-radius: 4px;
     margin: auto;
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
 
     h2 {
       color: #ccc;

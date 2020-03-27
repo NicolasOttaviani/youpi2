@@ -5,47 +5,37 @@
   import { lastInfo, isPlaying, keyPress, keyRelease } from './stores'
   const { width, height } = lastInfo.options
   const lock = getContext('lock')
+
   const dispatch = createEventDispatcher()
   function init(canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext('2d', {})
     let canMove = false
     const render = startRender(ctx)
 
-    function requestPointerLock() {
-        canvas.requestPointerLock()
-    }
-
-    function exitPointerLock() {
-      document.exitPointerLock()
-    }
-
-    lock.requestPointerLock = requestPointerLock
-    lock.exitPointerLock = exitPointerLock
-
     function onKeyPress({ keyCode }: KeyboardEvent) {
-      if (canMove) {
+      if (canMove && get(isPlaying)) {
         keyPress(keyCode)
       }
     }
 
     function onKeyRelease({ keyCode }: KeyboardEvent) {
-      if (canMove) {
+      if (canMove && get(isPlaying)) {
         keyRelease(keyCode)
       }
     }
 
     function unlock() {
       canMove = document.pointerLockElement === canvas ? true : false
-      if (!canMove) dispatch('config')
+      if (!canMove) dispatch('close')
     }
+    lock.requestPointerLock = () => canvas.requestPointerLock()
+    lock.exitPointerLock = ()  => document.exitPointerLock()
     document.addEventListener('pointerlockchange', unlock)
-    canvas.addEventListener('click', requestPointerLock)
     document.addEventListener('keydown', onKeyPress)
     document.addEventListener('keyup', onKeyRelease)
     return {
       destroy() {
         render.destroy()
-        canvas.removeEventListener('click', requestPointerLock)
         document.removeEventListener('keydown', onKeyPress)
         document.removeEventListener('keyup', onKeyRelease)
         document.removeEventListener('pointerlockchange', unlock)

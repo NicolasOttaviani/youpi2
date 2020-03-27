@@ -1,3 +1,41 @@
+<section>
+  <header class="main">
+    <h3>
+      Welcome {lastInfo.user}
+    </h3>
+  </header>
+  <header class="aside">
+    Users
+  </header>
+  <aside>
+    <ul>
+      {#each $users as user}
+        <li>{user}</li>
+      {/each}
+    </ul>
+  </aside>
+  <main>
+    <ul>
+      {#each $messages as { timestamp, user, message }}
+        <li>
+          <b>{user}</b>
+          : {message}
+          <time>({fromNow(timestamp)})</time>
+        </li>
+      {/each}
+    </ul>
+  </main>
+  <footer>
+    <form on:submit|preventDefault={send}>
+      <input
+        type="text"
+        placeholder="Enter your message..."
+        bind:value={toSend} />
+      <button type="submit" disabled={!toSend}>Send</button>
+    </form>
+  </footer>
+</section>
+
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { emit, lastInfo, messages, users } from './stores'
@@ -20,10 +58,6 @@
       emit(toSend)
       toSend = ''
     }
-  }
-
-  function config() {
-    dispatch('config')
   }
 </script>
 
@@ -132,41 +166,3 @@
   }
 
 </style>
-
-<section>
-  <header class="main">
-    <h3>
-      Welcome {lastInfo.user}
-    </h3>
-  </header>
-  <header class="aside">
-    Users
-  </header>
-  <aside>
-    <ul>
-      {#each $users as user}
-        <li>{user}</li>
-      {/each}
-    </ul>
-  </aside>
-  <main>
-    <ul>
-      {#each $messages as { timestamp, user, message }}
-        <li>
-          <b>{user}</b>
-          : {message}
-          <time>({fromNow(timestamp)})</time>
-        </li>
-      {/each}
-    </ul>
-  </main>
-  <footer>
-    <form on:submit|preventDefault={send}>
-      <input
-        type="text"
-        placeholder="Enter your message..."
-        bind:value={toSend} />
-      <button type="submit" disabled={!toSend}>Send</button>
-    </form>
-  </footer>
-</section>
