@@ -75,12 +75,12 @@ export function gameEngine(
     team1: 0,
     team2: 0,
   }
-  const toBeMovedNextFrame: Position[] = []
 
   Engine.run(engine)
   Events.on(engine, 'beforeUpdate', handleBeforeUpdate)
   Events.on(engine, 'afterUpdate', handleAfterUpdate)
-  Events.on(engine, 'collisionStart', handleCollision)
+  Events.on(engine, 'collisionStart', handleCollisionStart)
+  Events.on(engine, 'collisionEnd', handleCollisionEnd)
 
   return {
     keyPress(index, code) {
@@ -99,32 +99,41 @@ export function gameEngine(
     destroy() {
       Events.off(engine, 'beforeUpdate', handleBeforeUpdate)
       Events.off(engine, 'afterUpdate', handleAfterUpdate)
-      Events.off(engine, 'collisionStart', handleCollision)
+      Events.off(engine, 'collisionStart', handleCollisionStart)
+      Events.off(engine, 'collisionEnd', handleCollisionEnd)
     },
   }
 
-  function handleCollision(event: IEventCollision<void>) {
+  function handleCollisionStart(event: IEventCollision<void>) {
     event.pairs.forEach(pair => {
       handleGoalCollistion(pair)
       handleBallCollision(pair)
     })
   }
 
+  function handleCollisionEnd(event: IEventCollision<void>) {
+    event.pairs.forEach(pair => {
+      const typeA: string = pair.bodyA.label
+      const typeB: string = pair.bodyB.label
+
+      if (typeA === ballOptions.label) {
+        if (typeB.indexOf('player') > -1) {
+          const index = parseInt(typeB.substring(6))
+          const player = players[index]
+          player.hasBall = false
+        }
+      }
+    })
+  }
+
   function handleBallCollision(pair: IPair) {
     const typeA: string = pair.bodyA.label
     const typeB: string = pair.bodyB.label
-
     if (typeA === ballOptions.label) {
       if (typeB.indexOf('player') > -1) {
         const index = parseInt(typeB.substring(6))
         const player = players[index]
-        if (player.keys.shoot) {
-          const force = 0.1
-          const deltaVector = Vector.sub(ball.position, player.body.position)
-          const normalizedDelta = Vector.normalise(deltaVector)
-          const forceVector = Vector.mult(normalizedDelta, force)
-          toBeMovedNextFrame.push(forceVector)
-        }
+        player.hasBall = true
       }
     }
   }
@@ -172,11 +181,6 @@ export function gameEngine(
       ballVelocity.y = clamp
     }
     Body.setVelocity(ball, ballVelocity)
-    toBeMovedNextFrame.forEach(pos => {
-      Body.applyForce(ball, ball.position, pos)
-    })
-    toBeMovedNextFrame.splice(0, toBeMovedNextFrame.length)
-
     clampPosition(ball)
     players.forEach(player => {
       player.update()
@@ -232,16 +236,14 @@ export function gameEngine(
         throw new Error('Oh no, i need to implement rectangle player')
       }
       const sensorElem = {
-        circle: { x: elem.circle.x, y: elem.circle.y, r: elem.circle.r + 10 },
+        circle: { x: elem.circle.x, y: elem.circle.y, r: elem.circle.r + 5 },
       }
       const sensor = draw(all, sensorElem, {
         isSensor: true,
         label,
       })
-
       all.push(Constraint.create({ bodyA: body, bodyB: sensor }))
-
-      return new Player(body, force)
+      return new Player(body, ball, force)
     })
     World.add(world, all as any)
     return { goal1, goal2, players, ball }
@@ -285,11 +287,14 @@ const defaultKeys = {
 
 class Player {
   body: BodyClass
+  ball: BodyClass
   force: number
   keys: Keys = { ...defaultKeys }
-  constructor(body: BodyClass, force: number) {
+  hasBall = false
+  constructor(body: BodyClass, ball: BodyClass, force: number) {
     this.body = body
     this.force = force
+    this.ball = ball
   }
   keyPress(code: number) {
     if (code === KEYS.LEFT) this.keys.left = true
@@ -315,5 +320,13 @@ class Player {
     if (this.keys.up) forceVector.y = forceVector.y - this.force
     if (this.keys.down) forceVector.y = forceVector.y + this.force
     Body.applyForce(this.body, this.body.position, forceVector)
+
+    if (this.keys.shoot && this.hasBall) {
+      const force = 0.1
+      const deltaVector = Vector.sub(this.ball.position, this.body.position)
+      const normalizedDelta = Vector.normalise(deltaVector)
+      const forceVector = Vector.mult(normalizedDelta, force)
+      Body.applyForce(this.ball, this.ball.position, forceVector)
+    }
   }
 }
