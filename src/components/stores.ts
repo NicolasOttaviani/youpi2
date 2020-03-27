@@ -66,6 +66,7 @@ export function connect(user: string) {
       score.set(hello.score)
       players.set(hello.players)
       running.set(hello.running)
+      messages.set(hello.messages)
       lastInfo.options = hello.options
       lastInfo.ground = hello.ground
       lastInfo.positions = []

@@ -1,8 +1,9 @@
-import { Options, Hello } from '../types'
+import { Options, Hello, Message } from '../types'
 import { Server } from 'socket.io'
 import { GameEngine, gameEngine } from './game-engine'
 import { ground } from './ground'
 
+const CHAT_FILO_SIZE = 10
 const defaultOpts: Options = {
   maxGoal: 2,
   player: {
@@ -35,6 +36,7 @@ interface Player {
 }
 
 export function game(io: Server) {
+  const messages: Message[] = []
   const users: string[] = []
   const players: Player[] = []
   let engine: GameEngine | undefined
@@ -45,11 +47,16 @@ export function game(io: Server) {
     socket.emit('hello', mapHello())
     socket.broadcast.emit('user changed', users)
     socket.on('message', message => {
-      io.emit('message', {
+      const data = {
         message,
         user,
         timestamp: currentTimestamp(),
-      })
+      }
+      messages.push(data)
+      if (messages.length > CHAT_FILO_SIZE) {
+        messages.shift()
+      }
+      io.emit('message', data)
     })
     socket.on('game pick player', (index: number) => {
       if (pickPlayer(index)) {
@@ -149,6 +156,7 @@ export function game(io: Server) {
     function mapHello(): Hello {
       return {
         ground: currentGround,
+        messages,
         users,
         running: engine !== undefined,
         players: mapPlayers(),

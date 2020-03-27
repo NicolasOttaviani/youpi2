@@ -12,6 +12,7 @@ export interface Hello {
   players: Players
   running: boolean
   options: Options
+  messages: Message[]
 }
 
 export interface Message {
