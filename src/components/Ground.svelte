@@ -12,9 +12,7 @@
     const render = startRender(ctx)
 
     function requestPointerLock() {
-      if (get(isPlaying)) {
         canvas.requestPointerLock()
-      }
     }
 
     function exitPointerLock() {
@@ -38,6 +36,7 @@
 
     function unlock() {
       canMove = document.pointerLockElement === canvas ? true : false
+      if (!canMove) dispatch('config')
     }
     document.addEventListener('pointerlockchange', unlock)
     canvas.addEventListener('click', requestPointerLock)
@@ -56,9 +55,6 @@
 </script>
 
 <section>
-  <header>
-    <button on:click={() => dispatch('config')}>Config</button>
-  </header>
   <main>
     <canvas
       use:init
