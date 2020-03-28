@@ -1,15 +1,12 @@
-  <div class="component left" style={`transform: translateX(-${$tranform}px);`}>
-    <div class="lil" />
+  <div class="left" style={`transform: translateX(-${$tranform}px);`}>
   </div>
-  <div class="component right" style={`transform: translateX(${$tranform}px)`}>
-    <div class="lil">
-      <div class="login">
-        <h1>Youpi2</h1>
-        <form on:submit|preventDefault={submit}>
-          <input type="text" placeholder="Login " bind:value={user} bind:this={ref} />
-          <button type="submit" disabled={!user}>Enter</button>
-        </form>
-      </div>
+  <div class="right" style={`transform: translateX(${$tranform}px)`}>
+    <div class="login">
+      <h1>Youpi2</h1>
+      <form on:submit|preventDefault={submit}>
+        <input type="text" placeholder="Login " bind:value={user} bind:this={ref} />
+        <button type="submit" disabled={!user}>Enter</button>
+      </form>
     </div>
   </div>
 <script lang="ts">
@@ -100,12 +97,14 @@
     }
     
   }
-  .component {
+  .left, .right {
     position: absolute;
     z-index: 10;
     height: 100vh;
     width: 50%;
-    .lil {
+    &::after {
+      content: '';
+      display: block;
       height: 80%;
     }
   }
@@ -113,7 +112,7 @@
     margin-top: -10px;
     background-color:  var(--accent);
     left: 0px;
-    .lil{
+    &::after{
       background-color: var(--primary);
       margin-top: 40px;
       margin-left: -20px;
@@ -124,7 +123,7 @@
     right: 0px;
     margin-top: -10px;
     background-color:  var(--secondary);
-    .lil{
+    &::after {
       background-color: var(--primary);
       margin-top: 40px;
       margin-left: 20px;

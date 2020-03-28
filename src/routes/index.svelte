@@ -1,8 +1,7 @@
 <script lang="ts">
   import { setContext } from 'svelte'
-  import Chat from '../components/Chat.svelte'
   import Ground from '../components/Ground.svelte'
-  import GameSelect from '../components/GameSelect.svelte'
+  import GameBoard from '../components/GameBoard.svelte'
   import { running, ready } from '../components/stores'
   import Login from '../components/Login.svelte'
   let logged = false
@@ -33,30 +32,10 @@
 {/if}
 {#if $ready}
   {#if !$running || config}
-    <div class="modal main">
-      <GameSelect on:close={closeConfig} />
-      <Chat />
-    </div>
+    <GameBoard on:close={closeConfig} />
   {/if}
-  <div>
-    <Ground on:close={showConfig} />
-  </div>
+  <Ground on:close={showConfig} />
 {/if}
 
 <style lang="scss">
-  .modal {
-    position: fixed;
-    width: 10Ovw;
-    height: 100vh;
-    background: white;
-  }
-
-  .main {
-    display: grid;
-    width: 100vw;
-    height: 100vh;
-    min-width: 0;
-    min-height: 0;
-    grid-template-rows: 420px auto;
-  }
 </style>
