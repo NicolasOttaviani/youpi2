@@ -52,10 +52,12 @@ export function gameEngine(
   const goal1Options: IChamferableBodyDefinition = {
     label: 'team2',
     isStatic: true,
+    isSensor: true,
   }
   const goal2Options: IChamferableBodyDefinition = {
     label: 'team1',
     isStatic: true,
+    isSensor: true,
   }
   const playerOptions: IChamferableBodyDefinition = {
     slop: 0,
@@ -82,6 +84,7 @@ export function gameEngine(
     team1: 0,
     team2: 0,
   }
+  let pause = false
 
   Engine.run(engine)
   Events.on(engine, 'beforeUpdate', handleBeforeUpdate)
@@ -146,10 +149,10 @@ export function gameEngine(
   }
 
   function handleGoalCollistion(pair: IPair) {
+    if (pause) return
     const typeA: string = pair.bodyA.label
     const typeB: string = pair.bodyB.label
     let newScore: number | undefined
-
     if (typeB === ballOptions.label) {
       if (typeA === goal2Options.label) {
         score.team1 += 1
@@ -160,12 +163,20 @@ export function gameEngine(
       }
       if (newScore !== undefined) {
         if (newScore >= maxGoal) {
-          winner(typeA)
+          pause = true
+          setTimeout(() => {
+            winner(typeA)
+            pause = false
+          }, 1000)
           return
         }
-        handleTableReset()
-        handleBeforeUpdate()
-        goal(typeA)
+        pause = true
+        setTimeout(() => {
+          handleTableReset()
+          handleBeforeUpdate()
+          goal(typeA)
+          pause = false
+        }, 1000)
       }
     }
   }
