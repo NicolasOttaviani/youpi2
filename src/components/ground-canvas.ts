@@ -9,9 +9,9 @@ interface Options {
 }
 
 export function startRender(ctx: CanvasRenderingContext2D) {
-  const borderColor = getComputedStyle(
-    document.documentElement,
-  ).getPropertyValue('--accent')
+  const borderColor = getVar('--accent')
+  const team1Color = getVar('--team1')
+  const team2Color = getVar('--team2')
   let frame: number
   const draw = () => {
     const { ground, positions, options } = lastInfo
@@ -23,17 +23,22 @@ export function startRender(ctx: CanvasRenderingContext2D) {
     ground.borders.forEach(block =>
       drawBlock(ctx, block, { color: borderColor }),
     )
-    drawBlock(ctx, ground.goal1, { color: borderColor })
-    drawBlock(ctx, ground.goal2, { color: borderColor })
+    drawBlock(ctx, ground.goal1, { color: team1Color })
+    drawBlock(ctx, ground.goal2, { color: team2Color })
     const ballOpts = positions.length === 3 ? positions[0] : {}
     drawBlock(ctx, ground.ball, {
       ...ballOpts,
       color: borderColor,
       forceStroke: true,
     })
-    ground.players.forEach((block, index) =>
-      drawBlock(ctx, block, positions.length === 3 ? positions[index + 1] : {}),
-    )
+    ground.players.forEach((block, index) => {
+      const playerOpt = positions.length === 3 ? positions[index + 1] : {}
+      drawBlock(ctx, block, {
+        ...playerOpt,
+        forceStroke: true,
+        color: index % 2 === 0 ? team1Color : team2Color,
+      })
+    })
     ctx.restore()
 
     frame = window.requestAnimationFrame(draw)
@@ -73,4 +78,12 @@ function drawBlock(
   if (stroke) {
     ctx.stroke()
   }
+}
+
+function getVar(name: string) {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(
+    name,
+  )
+  if (!value) throw new Error(`oh no, i could not find css var ${name}`)
+  return value
 }
