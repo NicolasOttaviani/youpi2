@@ -8,6 +8,7 @@
     start,
     stop,
     isPlaying,
+    winner,
   } from './stores'
   import Chat from './Chat.svelte'
   import Arrow from './Arrow.svelte'
@@ -120,6 +121,13 @@
     &.team2 {
       color: var(--team2);
     }
+
+    h3.winner {
+      background-image: url('/winner.png');
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      background-position: center; 
+    }
   }
 
   h3,
@@ -129,7 +137,8 @@
     text-align: center;
   }
   h3 {
-    margin: 50px 0 30px 0;
+    margin-top: 20px;
+    padding: 30px 0 30px 0;
   }
 
   .actions {
@@ -194,14 +203,14 @@
 
 <div class="left" style={`transform: translateX(-${$transform}px);`}>
   <div class="team team1">
-    <h3>Team 1</h3>
+    <h3 class:winner={$winner === 'team1'}>Team 1</h3>
     <PickPlayerButton team1={true} on:click={() => pick(0)} bind:player={player1} />
   </div>
 
 </div>
 <div class="right" style={`transform: translateX(${$transform}px)`}>
   <div class="team team2">
-    <h3>Team 2</h3>
+    <h3 class:winner={$winner === 'team2'}>Team 2</h3>
     <PickPlayerButton team1={false} on:click={() => pick(1)} bind:player={player2} />
   </div>
 </div>

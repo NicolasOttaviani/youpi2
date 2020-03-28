@@ -109,6 +109,7 @@ export function connect(user: string) {
     })
     .on('game winner', (team: string) => {
       stopEngine()
+      console.log('?', team)
       winner.set(team)
     })
 

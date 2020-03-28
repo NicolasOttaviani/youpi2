@@ -72,8 +72,8 @@ export function game(io: Server) {
           goal() {
             io.emit('game goal', mapScore())
           },
-          winner() {
-            io.emit('game winner', mapScore())
+          winner(team) {
+            io.emit('game winner', team)
             if (!engine) return
             engine.destroy()
             engine = undefined
