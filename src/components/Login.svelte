@@ -1,6 +1,6 @@
-  <div class="left" style={`transform: translateX(-${$tranform}px);`}>
+  <div class="left" style={`transform: translateX(-${$transform}px);`}>
   </div>
-  <div class="right" style={`transform: translateX(${$tranform}px)`}>
+  <div class="right" style={`transform: translateX(${$transform}px)`}>
     <div class="login">
       <h1>Youpi2</h1>
       <form on:submit|preventDefault={submit}>
@@ -19,7 +19,7 @@
   let ref
   let user = ''
 
-  const tranform = tweened(0, {
+  const transform = tweened(0, {
 		duration: 2000,
 		easing: cubicOut
   });
@@ -35,7 +35,7 @@
   async function submit() {
     if (user !== '') {
       await connect(user)
-      await tranform.set(1400)
+      await transform.set(1400)
       dispatch('login', user)
     }
   }
