@@ -26,19 +26,21 @@
 
     function unlock() {
       canMove = document.pointerLockElement === canvas ? true : false
-      if (!canMove) dispatch('close')
+      //if (!canMove) dispatch('close')
     }
     lock.requestPointerLock = () => canvas.requestPointerLock()
     lock.exitPointerLock = ()  => document.exitPointerLock()
     document.addEventListener('pointerlockchange', unlock)
     document.addEventListener('keydown', onKeyPress)
     document.addEventListener('keyup', onKeyRelease)
+    canvas.addEventListener('click', lock.requestPointerLock)
     return {
       destroy() {
         render.destroy()
         document.removeEventListener('keydown', onKeyPress)
         document.removeEventListener('keyup', onKeyRelease)
         document.removeEventListener('pointerlockchange', unlock)
+        canvas.removeEventListener('click', lock.requestPointerLock)
       },
     }
   }
@@ -50,6 +52,18 @@
       use:init
       {width}
       {height}
-      style={`width: ${width}px; height: ${height}px; border: 1px black solid;`} />
+      style={`width: ${width}px; height: ${height}px;`} />
   </main>
 </section>
+
+<style lang="scss">
+  section {
+    background: var(--secondary);
+    height: 100vh;
+    width: 100vw;
+    canvas {
+      display: block;
+      margin: 0px auto;
+    }
+  }
+</style>
