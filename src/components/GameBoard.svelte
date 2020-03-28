@@ -233,6 +233,6 @@ function pick(index: number) {
     <BackButton on:back={backGame} />
   </div>
 </div>
-<div class="bottom">
+<div class="bottom" style={`transform: translateY(${$transform}px)`}>
   <Chat />
 </div>
