@@ -5,12 +5,12 @@
   import { running, ready } from '../components/stores'
   import Login from '../components/Login.svelte'
   let logged = false
-  let config = false
+  let config = !$running
   const lock = {}
   setContext('lock', lock)
 
   async function login(user) {
-      logged = true
+    logged = true
   }
 
   function showConfig() {

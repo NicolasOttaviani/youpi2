@@ -64,6 +64,8 @@
     background: var(--secondary);
     height: 100vh;
     width: 100vw;
+    position: absolute;
+    top: 0;
     p {
       font-family: var(--font);
       text-align: center;
