@@ -1,17 +1,6 @@
-  <div class="left" style={`transform: translateX(-${$transform}px);`}>
-  </div>
-  <div class="right" style={`transform: translateX(${$transform}px)`}>
-    <div class="login">
-      <h1>Youpi2</h1>
-      <form on:submit|preventDefault={submit}>
-        <input type="text" placeholder="Login " bind:value={user} bind:this={ref} />
-        <button type="submit" disabled={!user}>Enter</button>
-      </form>
-    </div>
-  </div>
 <script lang="ts">
-  import { tweened } from 'svelte/motion';
-	import { cubicOut } from 'svelte/easing';
+  import { tweened } from 'svelte/motion'
+  import { cubicOut } from 'svelte/easing'
 
   import { connect } from './stores'
   import { createEventDispatcher, onMount } from 'svelte'
@@ -20,9 +9,9 @@
   let user = ''
 
   const transform = tweened(0, {
-		duration: 2000,
-		easing: cubicOut
-  });
+    duration: 2000,
+    easing: cubicOut,
+  })
   onMount(() => {
     setTimeout(() => ref.focus())
     const login = getParameterByName('login')
@@ -71,7 +60,8 @@
       padding: 12px 36px;
     }
   }
-  .left, .right {
+  .left,
+  .right {
     position: absolute;
     z-index: 10;
     height: 100vh;
@@ -82,11 +72,11 @@
       height: 80%;
     }
   }
-  .left{
+  .left {
     margin-top: -10px;
-    background-color:  var(--accent);
+    background-color: var(--accent);
     left: 0px;
-    &::after{
+    &::after {
       background-color: var(--primary);
       margin-top: 40px;
       margin-left: -20px;
@@ -96,7 +86,7 @@
   .right {
     right: 0px;
     margin-top: -10px;
-    background-color:  var(--secondary);
+    background-color: var(--secondary);
     &::after {
       background-color: var(--primary);
       margin-top: 40px;
@@ -104,3 +94,18 @@
     }
   }
 </style>
+
+<div class="left" style={`transform: translateX(-${$transform}px);`} />
+<div class="right" style={`transform: translateX(${$transform}px)`}>
+  <div class="login">
+    <h1>Youpi2</h1>
+    <form on:submit|preventDefault={submit}>
+      <input
+        type="text"
+        placeholder="Login "
+        bind:value={user}
+        bind:this={ref} />
+      <button type="submit" disabled={!user}>Enter</button>
+    </form>
+  </div>
+</div>

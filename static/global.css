@@ -9,8 +9,8 @@
   --on-accent: #eee;
   --color: #333;
   --disabled: #999;
-  --team1: #003833  ;
-  --team2: #96000e; 
+  --team1: #003833;
+  --team2: #96000e;
 }
 
 * {
@@ -83,10 +83,8 @@ button[disabled] {
   color: var(--color);
 }
 
-
 @media (min-width: 400px) {
   body {
     font-size: 16px;
   }
 }
-

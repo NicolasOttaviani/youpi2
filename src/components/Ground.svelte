@@ -2,7 +2,14 @@
   import { get } from 'svelte/store'
   import { getContext, createEventDispatcher } from 'svelte'
   import { startRender } from './ground-canvas'
-  import { lastInfo, isPlaying, keyPress, keyRelease, players, score } from './stores'
+  import {
+    lastInfo,
+    isPlaying,
+    keyPress,
+    keyRelease,
+    players,
+    score,
+  } from './stores'
   const { width, height } = lastInfo.options
   const lock = getContext('lock')
 
@@ -29,7 +36,7 @@
       if (!canMove) dispatch('close')
     }
     lock.requestPointerLock = () => canvas.requestPointerLock()
-    lock.exitPointerLock = ()  => document.exitPointerLock()
+    lock.exitPointerLock = () => document.exitPointerLock()
     document.addEventListener('pointerlockchange', unlock)
     document.addEventListener('keydown', onKeyPress)
     document.addEventListener('keyup', onKeyRelease)
@@ -45,19 +52,6 @@
     }
   }
 </script>
-
-<section>
-  <main>
-    <p>
-      {$players[0] || 'Nobody'}: {$score.team1} / {$players[1] || 'Nobody'}: {$score.team2}
-    </p>
-    <canvas
-      use:init
-      {width}
-      {height}
-      style={`width: ${width}px; height: ${height}px;`} />
-  </main>
-</section>
 
 <style lang="scss">
   section {
@@ -78,3 +72,16 @@
     }
   }
 </style>
+
+<section>
+  <main>
+    <p>
+      {$players[0] || 'Nobody'}: {$score.team1} / {$players[1] || 'Nobody'}: {$score.team2}
+    </p>
+    <canvas
+      use:init
+      {width}
+      {height}
+      style={`width: ${width}px; height: ${height}px;`} />
+  </main>
+</section>

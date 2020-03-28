@@ -20,15 +20,18 @@
   function closeConfig() {
     config = false
   }
-  
 </script>
+
+<style lang="scss">
+
+</style>
 
 <svelte:head>
   <title>Youpi 2</title>
 </svelte:head>
 
 {#if !logged}
-  <Login on:login={({detail}) => login(detail)} />
+  <Login on:login={({ detail }) => login(detail)} />
 {/if}
 {#if $ready}
   {#if !$running || config}
@@ -36,6 +39,3 @@
   {/if}
   <Ground on:close={showConfig} />
 {/if}
-
-<style lang="scss">
-</style>

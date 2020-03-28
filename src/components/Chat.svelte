@@ -1,33 +1,3 @@
-<section>
-  <aside>
-    <ul>
-      {#each $users as user}
-        <li>{user}</li>
-      {/each}
-    </ul>
-  </aside>
-  <main bind:this={chatWindow}>
-    <ul>
-      {#each $messages as { timestamp, user, message }}
-        <li>
-          <b>{user}</b>
-          : {message}
-          <time>({fromNow(timestamp)})</time>
-        </li>
-      {/each}
-    </ul>
-  </main>
-  <footer>
-    <form on:submit|preventDefault={send}>
-      <input
-        type="text"
-        placeholder="Enter your message..."
-        bind:value={toSend} />
-      <button type="submit" disabled={!toSend}>Send</button>
-    </form>
-  </footer>
-</section>
-
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
   import { emit, lastInfo, messages, users } from './stores'
@@ -43,9 +13,9 @@
   dayjs.extend(relativeTime)
 
   messages.subscribe(() => {
-    if (!chatWindow) return;
+    if (!chatWindow) return
     setTimeout(() => {
-      chatWindow.scrollTop = chatWindow.scrollHeight; 
+      chatWindow.scrollTop = chatWindow.scrollHeight
     }, 0)
   })
 
@@ -63,7 +33,8 @@
 </script>
 
 <style lang="scss">
-  ul, li {
+  ul,
+  li {
     list-style-type: none;
     margin: 0;
     padding: 0;
@@ -80,12 +51,13 @@
     display: grid;
     grid-template-columns: 200px auto;
     grid-template-rows: auto 60px;
-    grid-template-areas: "sidebar main"
-                       "sidebar footer";
+    grid-template-areas:
+      'sidebar main'
+      'sidebar footer';
     margin: 0px;
     border-top: var(--border);
     background: var(--secondary);
-  
+
     main {
       grid-area: main;
       overflow: auto;
@@ -120,8 +92,36 @@
           margin-left: 10px;
         }
       }
-      
     }
   }
-
 </style>
+
+<section>
+  <aside>
+    <ul>
+      {#each $users as user}
+        <li>{user}</li>
+      {/each}
+    </ul>
+  </aside>
+  <main bind:this={chatWindow}>
+    <ul>
+      {#each $messages as { timestamp, user, message }}
+        <li>
+          <b>{user}</b>
+          : {message}
+          <time>({fromNow(timestamp)})</time>
+        </li>
+      {/each}
+    </ul>
+  </main>
+  <footer>
+    <form on:submit|preventDefault={send}>
+      <input
+        type="text"
+        placeholder="Enter your message..."
+        bind:value={toSend} />
+      <button type="submit" disabled={!toSend}>Send</button>
+    </form>
+  </footer>
+</section>
