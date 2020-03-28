@@ -1,9 +1,9 @@
 {
-  "background_color": "#ffffff",
+  "background_color": "#000",
   "theme_color": "#333333",
-  "name": "TODO",
+  "name": "youpi2",
   "short_name": "youpi2",
-  "display": "minimal-ui",
+  "display": "youpi2",
   "start_url": "/",
   "icons": [
     {
