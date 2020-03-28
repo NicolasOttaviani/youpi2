@@ -29,10 +29,12 @@
   let player1, player2
   let hidden = true
 
-  $: player1 = $players[0]
-  $: player2 = $players[1]
+  players.subscribe($players => {
+    player1 = $players[0]
+    player2 = $players[1]
+  })
 
-  function pick(index: number) {
+function pick(index: number) {
     pickPlayer(index)
   }
 
@@ -125,7 +127,6 @@
     h3.winner {
       background-image: url('/winner.png');
       background-repeat: no-repeat;
-      background-attachment: fixed;
       background-position: center; 
     }
   }

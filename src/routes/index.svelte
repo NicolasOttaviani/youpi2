@@ -2,13 +2,13 @@
   import { setContext } from 'svelte'
   import Ground from '../components/Ground.svelte'
   import GameBoard from '../components/GameBoard.svelte'
-  import { running, ready } from '../components/stores'
+  import { running, ready, configureClose } from '../components/stores'
   import Login from '../components/Login.svelte'
   let logged = false
   let config = !$running
   const lock = {}
   setContext('lock', lock)
-
+  configureClose()
   async function login(user) {
     logged = true
   }

@@ -109,14 +109,8 @@ export function connect(user: string) {
     })
     .on('game winner', (team: string) => {
       stopEngine()
-      console.log('?', team)
       winner.set(team)
     })
-
-  onDestroy(() => {
-    if (!socket) return
-    socket.close()
-  })
   return new Promise((resolve, reject) => {
     if (!socket) {
       reject()
@@ -159,4 +153,11 @@ export function start() {
 export function stop() {
   if (!socket || !get(running)) return
   socket.emit('game stop')
+}
+
+export function configureClose() {
+  onDestroy(() => {
+    if (!socket) return
+    socket.close()
+  })
 }

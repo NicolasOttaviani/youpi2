@@ -25,7 +25,6 @@
 
   function send() {
     if (toSend) {
-      console.log('benoui')
       emit(toSend)
       toSend = ''
     }

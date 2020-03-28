@@ -1,4 +1,4 @@
-<div class="block" class:empty={!player} class:team1 on:click>
+<div class="block" class:empty={!player || player=== ''} class:team1 on:click>
     <span>{player || 'Click!'}</span>
 </div>
 
