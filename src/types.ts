@@ -26,6 +26,10 @@ export interface Position {
   y: number
 }
 
+export interface PlayerPosition extends Position {
+  shoot: boolean
+}
+
 export interface Movement {
   movementX: number
   movementY: number

@@ -7,6 +7,7 @@ import {
   Players,
   Ground,
   Position,
+  PlayerPosition,
   Options,
   IS_A_KEYS,
 } from '../types'
@@ -16,7 +17,10 @@ export interface LastInfo {
   user: string
   ground: Ground | undefined
   options: Options | undefined
-  positions: Position[]
+  positions: {
+    ball: Position | undefined
+    players: PlayerPosition[]
+  }
 }
 
 interface Emitter {
@@ -51,7 +55,10 @@ export const lastInfo: LastInfo = {
   user: '',
   ground: undefined,
   options: undefined,
-  positions: [],
+  positions: {
+    ball: undefined,
+    players: [],
+  },
 }
 
 function stopEngine() {
@@ -70,7 +77,6 @@ export function connect(user: string) {
       messages.set(hello.messages)
       lastInfo.options = hello.options
       lastInfo.ground = hello.ground
-      lastInfo.positions = []
     })
     .on('message', (message: Message) => {
       messages.update($messages => [...$messages, message])
@@ -85,7 +91,8 @@ export function connect(user: string) {
       winner.set(undefined)
       running.set(true)
       score.set(initScore)
-      lastInfo.positions.splice(0, lastInfo.positions.length)
+      lastInfo.positions.ball = undefined
+      lastInfo.positions.players = []
     })
     .on('game goal', (newScore: Score) => {
       score.set(newScore)
@@ -94,13 +101,17 @@ export function connect(user: string) {
       stopEngine()
     })
     .on('r', (newPositions: number[]) => {
-      lastInfo.positions.splice(0, lastInfo.positions.length)
-      const base: Position[] = []
-      lastInfo.positions = newPositions.reduce(
+      const base: PlayerPosition[] = []
+      if (newPositions.length < 2) return
+      lastInfo.positions.ball = {
+        x: newPositions.shift() as number,
+        y: newPositions.shift() as number,
+      }
+      lastInfo.positions.players = newPositions.reduce(
         (result, value, index, array) => {
-          if (index % 2 === 0) {
-            const [x, y] = array.slice(index, index + 2)
-            result.push({ x, y })
+          if (index % 3 === 0) {
+            const [x, y, shoot] = array.slice(index, index + 3)
+            result.push({ x, y, shoot: shoot === 1 })
           }
           return result
         },

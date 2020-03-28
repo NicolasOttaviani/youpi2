@@ -1,4 +1,11 @@
-import { Ground, Block, GameEngineOptions, Position, KEYS } from '../types'
+import {
+  Ground,
+  Block,
+  GameEngineOptions,
+  Position,
+  PlayerPosition,
+  KEYS,
+} from '../types'
 import {
   default as Matter,
   IEventCollision,
@@ -12,7 +19,7 @@ import {
 export interface GameEngineCallbacks {
   goal: (team: string) => void
   winner: (team: string) => void
-  refresh: (positions: Position[]) => void
+  refresh: (ball: Position, players: PlayerPosition[]) => void
 }
 
 const { Engine, Bodies, World, Events, Body, Vector, Constraint } = Matter
@@ -168,7 +175,13 @@ export function gameEngine(
   }
 
   function handleAfterUpdate() {
-    refresh([ball.position, ...players.map(({ body }) => body.position)])
+    refresh(
+      ball.position,
+      players.map(({ body, keys }) => ({
+        ...body.position,
+        shoot: keys.shoot,
+      })),
+    )
   }
 
   function clampPositions() {

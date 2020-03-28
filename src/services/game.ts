@@ -1,4 +1,4 @@
-import { Options, Hello, Message } from '../types'
+import { Position, Options, Hello, Message } from '../types'
 import { Server } from 'socket.io'
 import { GameEngine, gameEngine } from './game-engine'
 import { ground } from './ground'
@@ -78,13 +78,15 @@ export function game(io: Server) {
             engine.destroy()
             engine = undefined
           },
-          refresh(positions) {
+          refresh(ball, players) {
             frameCount = (frameCount + 1) % 2
             if (frameCount === 0) {
-              io.emit(
-                'r',
-                positions.map(p => [Math.round(p.x), Math.round(p.y)]).flat(),
-              )
+              const { x, y } = roudPosition(ball)
+              const rest = players
+                .map(roudPosition)
+                .map(({ x, y, shoot }) => [x, y, shoot ? 1 : 0])
+                .flat()
+              io.emit('r', [x, y, ...rest])
             }
           },
         },
@@ -195,4 +197,12 @@ export function game(io: Server) {
 
 function currentTimestamp() {
   return new Date().getTime()
+}
+
+function roudPosition<T extends Position>(p: T) {
+  return {
+    ...p,
+    x: Math.round(p.x),
+    y: Math.round(p.y),
+  }
 }

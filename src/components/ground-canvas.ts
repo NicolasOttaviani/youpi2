@@ -6,7 +6,7 @@ interface Options {
   x?: number
   y?: number
   color?: string
-  forceStroke?: boolean
+  stroke?: string
   text?: string
   font?: string
 }
@@ -29,19 +29,21 @@ export function startRender(ctx: CanvasRenderingContext2D) {
     )
     drawBlock(ctx, ground.goal1, { color: team1Color })
     drawBlock(ctx, ground.goal2, { color: team2Color })
-    const ballOpts = positions.length === 3 ? positions[0] : {}
+    const ballOpts = positions.ball ? positions.ball : {}
     drawBlock(ctx, ground.ball, {
       ...ballOpts,
       color: borderColor,
-      forceStroke: true,
+      stroke: '#000',
     })
     ground.players.forEach((block, index) => {
-      const playerOpt = positions.length === 3 ? positions[index + 1] : {}
+      const playerOpt = positions.players[index]
+        ? positions.players[index]
+        : { shoot: false }
       const player = get(players)[index]
 
       drawBlock(ctx, block, {
         ...playerOpt,
-        forceStroke: true,
+        stroke: playerOpt.shoot ? '#fff' : '#000',
         color: index % 2 === 0 ? team1Color : team2Color,
         text: player,
         font,
@@ -64,8 +66,7 @@ function drawBlock(
   { rect, circle }: Block,
   options: Options = {},
 ) {
-  const { color, forceStroke } = options
-  let stroke = forceStroke
+  const { color, stroke } = options
   const { x, y, text, font } = { x: 0, y: 0, ...rect, ...rect, ...options }
   if (rect) {
     const { w, h } = { ...rect, ...options }
@@ -81,10 +82,11 @@ function drawBlock(
   if (color) {
     ctx.fillStyle = color
     ctx.fill()
-  } else {
-    stroke = true
   }
+
   if (stroke) {
+    ctx.lineWidth = 2
+    ctx.strokeStyle = stroke
     ctx.stroke()
   }
   if (text && font) {

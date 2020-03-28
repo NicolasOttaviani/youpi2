@@ -3,7 +3,7 @@
 </div>
 
 <script>
-export let player
+export let player = undefined
 export let team1
 </script>
 
