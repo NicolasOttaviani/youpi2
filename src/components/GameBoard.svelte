@@ -16,8 +16,16 @@
   </div>
   <div class="actions">
     <h2>Choose your Team</h2>
+    <Arrow  top={75} left={290}/>
+    <Arrow reverse={true} top={75} left={35}/>
+
+    <div class="description">
+      <p>Use the arrow keys to move the player and use the spacebar to shoot</p>
+      <img src="arrow-keys.png" alt="keyboard-arrows-example" />
+    </div>
+   
     {#if $running}
-      <div class="stop" on:click={stop}>
+      <div class="stop" on:click={stopGame}>
         <p>Stop</p>
       </div>  
     {:else}
@@ -25,7 +33,7 @@
         <p>Start</p>
       </div>
     {/if}
-    <div class="back" on:click={back}>
+    <div class="back" on:click={backGame}>
         <p>Back</p>
     </div>
   </div>
@@ -36,6 +44,7 @@
 
 <script lang="ts">
   import { createEventDispatcher, getContext } from 'svelte'
+  import { get } from 'svelte/store'
   import {
     running,
     players,
@@ -44,7 +53,8 @@
     stop,
     isPlaying,
   } from './stores'
-  import Chat from '../components/Chat.svelte'
+  import Chat from './Chat.svelte'
+  import Arrow from './Arrow.svelte'
   
   const dispatch = createEventDispatcher()
   const lock = getContext('lock')
@@ -58,8 +68,20 @@
     pickPlayer(index)
   }
 
+  function stopGame() {
+    if (!get(running)) return
+    stop()
+  }
+
   function startGame() {
+    if (get(running)) return
     start()
+    back()
+  }
+
+
+  function backGame() {
+    if (!get(running)) return
     back()
   }
 
@@ -67,6 +89,7 @@
     dispatch('close')
     lock.requestPointerLock()
   }
+
 </script>
 
 <style lang="scss">
@@ -138,23 +161,44 @@
     }
 
     .actions {
-      top: 50px;
+      top: 30px;
       position: absolute;
-      width: 425px;
-      height: 350px;
+      width: 500px;
+      bottom: 0px;
       left: -225px;
       color: var(--on-accent);
       h2 {
         margin-left: -120px;
       }
       .start, .stop, .back {
+        position: absolute;
         border: 1px solid var(--on-accent);
       }
       .start, .stop {
-        margin-left: 140px;
+        left: 130px;
+        top: 300px;
       }
       .back {
-        margin-left: 215px;
+        right: 0;
+        top: 300px;
+      }
+
+      .description {
+        position: absolute;
+        top: 150px;
+        left: 55px;
+        width: 330px;
+        display: flex;
+        justify-content: center;
+        align-content: center;
+        &>img {
+          max-width: 100px;
+          max-height: 75px;
+        }
+        &>p {
+          margin: 0;
+          flex: 1;
+        }
       }
     }
 
