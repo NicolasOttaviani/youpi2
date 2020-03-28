@@ -1,10 +1,11 @@
 <script lang="ts">
   import { setContext } from 'svelte'
+  import { get } from 'svelte/store'
   import Ground from '../components/Ground.svelte'
   import GameBoard from '../components/GameBoard.svelte'
   import { running, ready, configureClose } from '../components/stores'
   import Login from '../components/Login.svelte'
-  let logged = false
+  let logged = get(ready)
   let config = !$running
   const lock = {}
   setContext('lock', lock)

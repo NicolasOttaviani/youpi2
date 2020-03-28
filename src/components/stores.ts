@@ -169,6 +169,7 @@ export function stop() {
 export function configureClose() {
   onDestroy(() => {
     if (!socket) return
+    ready.set(false)
     socket.close()
   })
 }
