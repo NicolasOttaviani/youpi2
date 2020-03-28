@@ -13,6 +13,7 @@
   import Arrow from './Arrow.svelte'
   import StartButton from './StartButton.svelte'
   import BackButton from './BackButton.svelte'
+  import PickPlayerButton from './PickPlayerButton.svelte'
   import { tweened } from 'svelte/motion'
   import { cubicOut } from 'svelte/easing'
 
@@ -113,7 +114,12 @@
   }
 
   .team {
-    color: var(--accent);
+    &.team1 {
+      color: var(--team1);
+    }
+    &.team2 {
+      color: var(--team2);
+    }
   }
 
   h3,
@@ -123,21 +129,7 @@
     text-align: center;
   }
   h3 {
-    margin-top: 50px;
-  }
-
-  .player {
-    cursor: pointer;
-    margin: 60px auto;
-    width: 100px;
-    height: 100px;
-    border: 1px solid var(--color);
-    border-radius: 50px;
-    p {
-      margin: 0;
-      line-height: 100px;
-      text-align: center;
-    }
+    margin: 50px 0 30px 0;
   }
 
   .actions {
@@ -201,20 +193,16 @@
 </style>
 
 <div class="left" style={`transform: translateX(-${$transform}px);`}>
-  <div class="team">
+  <div class="team team1">
     <h3>Team 1</h3>
-    <div class="player" on:click={() => pick(0)}>
-      <p>{player1 || 'Click!'}</p>
-    </div>
+    <PickPlayerButton team1={true} on:click={() => pick(0)} bind:player={player1} />
   </div>
 
 </div>
 <div class="right" style={`transform: translateX(${$transform}px)`}>
-  <div class="team">
+  <div class="team team2">
     <h3>Team 2</h3>
-    <div class="player" on:click={() => pick(1)}>
-      <p>{player2 || 'Click!'}</p>
-    </div>
+    <PickPlayerButton team1={false} on:click={() => pick(1)} bind:player={player2} />
   </div>
 </div>
 <div class="actions" class:hidden>
