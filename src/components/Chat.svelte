@@ -1,12 +1,4 @@
 <section>
-  <header class="main">
-    <h3>
-      Welcome {lastInfo.user}
-    </h3>
-  </header>
-  <header class="aside">
-    Users
-  </header>
   <aside>
     <ul>
       {#each $users as user}
@@ -55,6 +47,7 @@
 
   function send() {
     if (toSend) {
+      console.log('benoui')
       emit(toSend)
       toSend = ''
     }
@@ -67,14 +60,8 @@
     margin: 0;
     padding: 0;
   }
-  h3 {
-    margin: 0;
-    padding: 0;
-  }
   :root {
-    --border: 2px solid #ddd;
-    --left-msg-bg: #ececec;
-    --right-msg-bg: #579ffb;
+    --border: 2px solid var(--accent);
   }
 
   section {
@@ -84,55 +71,34 @@
     min-height: 0;
     display: grid;
     grid-template-columns: 200px auto;
-    grid-template-rows: 30px auto 60px;
-    grid-template-areas: "sidehead header"
-                       "sidebar main"
+    grid-template-rows: auto 60px;
+    grid-template-areas: "sidebar main"
                        "sidebar footer";
     margin: 0px;
     border-top: var(--border);
-    border-radius: 5px;
-    background-color: #fcfcfe;
-    header.main {
-      grid-area: header;
-      border-bottom: var(--border);
-      padding-left: 10px;
-    }
-
+    background: var(--secondary);
+  
     main {
       grid-area: main;
       overflow: auto;
       padding: 10px;
       justify-content: space-between;
       align-items: center;
-      border-bottom: var(--border);
-      background: #eee;
-      color: #666;
 
       &::-webkit-scrollbar {
         width: 6px;
       }
-      &::-webkit-scrollbar-track {
-        background: #ddd;
-      }
-      &::-webkit-scrollbar-thumb {
-        background: #bdbdbd;
-      }
-    }
-    header.aside {
-      padding-left: 10px;
-      grid-area: sidehead;
-      border-bottom: var(--border);
     }
     aside {
       grid-area: sidebar;
       padding: 10px;
       border-right: var(--border);
+      background-color: var(--accent);
+      color: var(--on-accent);
     }
     footer {
       grid-area: footer;
       padding: 10px;
-      border-top: var(--border);
-      background: #eee;
       form {
         display: grid;
         grid-template-columns: 1fr 100px;
@@ -142,23 +108,8 @@
           border-radius: 3px;
           font-size: 1em;
         }
-        input {
-          background: #ddd;
-        }
         button {
           margin-left: 10px;
-          background: rgb(0, 196, 65);
-          color: #fff;
-          font-weight: bold;
-          cursor: pointer;
-          &:hover {
-            background: rgb(0, 180, 50);
-          }
-          &:disabled,
-          &[disabled] {
-            background-color: #cccccc;
-            color: #666666;
-          }
         }
       }
       

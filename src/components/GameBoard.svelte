@@ -128,7 +128,7 @@
       margin: 60px auto;
       width: 100px;
       height: 100px;
-      border: 1px solid black;
+      border: 1px solid var(--color);
       border-radius: 50px;
       p {
         margin: 0;
@@ -143,8 +143,12 @@
       width: 425px;
       height: 350px;
       left: -225px;
+      color: var(--on-accent);
       h2 {
         margin-left: -120px;
+      }
+      .start, .stop, .back {
+        border: 1px solid var(--on-accent);
       }
       .start, .stop {
         margin-left: 140px;

@@ -62,40 +62,14 @@
     margin-top: 20%;
     input {
       width: 360px;
-      background: var(--primary);
-      color: var(--accent);
-      font: inherit;
-      box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.1);
-      border: 0;
-      outline: 0;
       padding: 22px 18px;
       margin-left: 50px;
     }
 
     button {
       margin-left: -96px;
-      background: var(--accent);
-      opacity: 0.8;
-      color: #fff;
-      box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.1);
-      border-radius: 2px;
       padding: 12px 36px;
-      display: inline-block;
-      border: 0;
-      outline: 0;
-      cursor: pointer;
-
-      &:hover {
-        opacity: 1;
-      }
-
-      &:disabled,
-      &[disabled] {
-        background-color: #cccccc;
-        color: #666666;
-      }
     }
-    
   }
   .left, .right {
     position: absolute;
