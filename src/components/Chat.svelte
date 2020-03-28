@@ -6,7 +6,7 @@
       {/each}
     </ul>
   </aside>
-  <main>
+  <main bind:this={chatWindow}>
     <ul>
       {#each $messages as { timestamp, user, message }}
         <li>
@@ -34,12 +34,20 @@
   import dayjs from 'dayjs'
   import relativeTime from 'dayjs/plugin/relativeTime'
   import 'dayjs/locale/fr'
+  let chatWindow
 
   const dispatch = createEventDispatcher()
   let toSend = ''
 
   dayjs.locale('fr')
   dayjs.extend(relativeTime)
+
+  messages.subscribe(() => {
+    if (!chatWindow) return;
+    setTimeout(() => {
+      chatWindow.scrollTop = chatWindow.scrollHeight; 
+    }, 0)
+  })
 
   function fromNow(timestamp: number) {
     return dayjs(timestamp).fromNow()
