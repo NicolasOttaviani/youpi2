@@ -26,7 +26,7 @@
 
     function unlock() {
       canMove = document.pointerLockElement === canvas ? true : false
-      //if (!canMove) dispatch('close')
+      if (!canMove) dispatch('close')
     }
     lock.requestPointerLock = () => canvas.requestPointerLock()
     lock.exitPointerLock = ()  => document.exitPointerLock()
