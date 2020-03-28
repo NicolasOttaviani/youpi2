@@ -1,17 +1,21 @@
+import { get } from 'svelte/store'
 import { Block } from '../types'
-import { lastInfo } from './stores'
+import { lastInfo, players } from './stores'
 
 interface Options {
   x?: number
   y?: number
   color?: string
   forceStroke?: boolean
+  text?: string
+  font?: string
 }
 
 export function startRender(ctx: CanvasRenderingContext2D) {
   const borderColor = getVar('--accent')
   const team1Color = getVar('--team1')
   const team2Color = getVar('--team2')
+  const font = getVar('--font')
   let frame: number
   const draw = () => {
     const { ground, positions, options } = lastInfo
@@ -33,10 +37,14 @@ export function startRender(ctx: CanvasRenderingContext2D) {
     })
     ground.players.forEach((block, index) => {
       const playerOpt = positions.length === 3 ? positions[index + 1] : {}
+      const player = get(players)[index]
+
       drawBlock(ctx, block, {
         ...playerOpt,
         forceStroke: true,
         color: index % 2 === 0 ? team1Color : team2Color,
+        text: player,
+        font,
       })
     })
     ctx.restore()
@@ -58,13 +66,14 @@ function drawBlock(
 ) {
   const { color, forceStroke } = options
   let stroke = forceStroke
+  const { x, y, text, font } = { x: 0, y: 0, ...rect, ...rect, ...options }
   if (rect) {
-    const { x, y, w, h } = { ...rect, ...options }
+    const { w, h } = { ...rect, ...options }
     ctx.beginPath()
     ctx.rect(x, y, w, h)
   }
   if (circle) {
-    const { x, y, r } = { ...circle, ...options }
+    const { r } = { ...circle, ...options }
     ctx.beginPath()
     ctx.arc(x, y, r, 0, 2 * Math.PI)
   }
@@ -77,6 +86,10 @@ function drawBlock(
   }
   if (stroke) {
     ctx.stroke()
+  }
+  if (text && font) {
+    ctx.font = '30px ' + font
+    ctx.fillText(text, x - 25, y + 65)
   }
 }
 
