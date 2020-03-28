@@ -23,18 +23,13 @@
       <p>Use the arrow keys to move the player and use the spacebar to shoot</p>
       <img src="arrow-keys.png" alt="keyboard-arrows-example" />
     </div>
-   
-    {#if $running}
-      <div class="stop" on:click={stopGame}>
-        <p>Stop</p>
-      </div>  
-    {:else}
-      <div class="start" on:click={startGame}>
-        <p>Start</p>
-      </div>
-    {/if}
+
+    <div class="start">
+      <StartButton on:start={startGame} on:stop={stopGame} />  
+    </div>
+    
     <div class="back" on:click={backGame}>
-        <p>Back</p>
+      <BackButton on:back={backGame} />
     </div>
   </div>
 </div>
@@ -55,7 +50,9 @@
   } from './stores'
   import Chat from './Chat.svelte'
   import Arrow from './Arrow.svelte'
-  
+  import StartButton from './StartButton.svelte'
+  import BackButton from './BackButton.svelte'
+
   const dispatch = createEventDispatcher()
   const lock = getContext('lock')
   if (lock.exitPointerLock) lock.exitPointerLock()
@@ -146,7 +143,7 @@
       margin-top: 50px;
     }
 
-    .player, .back, .start, .stop {
+    .player {
       cursor: pointer;
       margin: 60px auto;
       width: 100px;
@@ -170,17 +167,16 @@
       h2 {
         margin-left: -120px;
       }
-      .start, .stop, .back {
+      .start, .back {
         position: absolute;
-        border: 1px solid var(--on-accent);
       }
-      .start, .stop {
-        left: 130px;
-        top: 300px;
+      .start {
+        left: 120px;
+        top: 350px;
       }
       .back {
-        right: 0;
-        top: 300px;
+        right: 20px;
+        top: 350px;
       }
 
       .description {
