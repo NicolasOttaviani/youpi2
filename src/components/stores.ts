@@ -5,7 +5,7 @@ import {
   Score,
   Hello,
   Players,
-  Ground,
+  Block,
   Position,
   PlayerPosition,
   Options,
@@ -15,13 +15,14 @@ import { onDestroy } from 'svelte'
 
 export interface LastInfo {
   user: string
-  ground: Ground | undefined
   options: Options | undefined
   defaultOptions: Options | undefined
-  positions: {
-    ball: Position | undefined
-    players: PlayerPosition[]
-  }
+}
+
+export interface PlayGround {
+  borders: Block[]
+  ball: undefined | Block
+  players: Block[]
 }
 
 interface Emitter {
@@ -54,13 +55,14 @@ export const isPlaying = derived(players, players => {
 let socket: Socket | undefined
 export const lastInfo: LastInfo = {
   user: '',
-  ground: undefined,
   options: undefined,
   defaultOptions: undefined,
-  positions: {
-    ball: undefined,
-    players: [],
-  },
+}
+
+export const ground: PlayGround = {
+  borders: [],
+  ball: undefined,
+  players: [],
 }
 
 function stopEngine() {
@@ -68,6 +70,10 @@ function stopEngine() {
 }
 
 export function connect(user: string) {
+  const team1Color = getVar('--team1')
+  const team2Color = getVar('--team2')
+  const borderColor = getVar('--accent')
+
   lastInfo.user = user
   socket = io({ query: { user } })
   socket
@@ -79,14 +85,14 @@ export function connect(user: string) {
       messages.set(hello.messages)
       lastInfo.defaultOptions = hello.defaultOptions
       lastInfo.options = hello.options
-      lastInfo.ground = hello.ground
+      ground.borders = mapBorders(hello)
     })
     .on('message', (message: Message) => {
       messages.update($messages => [...$messages, message])
     })
-    .on('options', (config: { options: Options; ground: Ground }) => {
-      lastInfo.options = config.options
-      lastInfo.ground = config.ground
+    .on('options', (hello: Hello) => {
+      lastInfo.options = hello.options
+      ground.borders = mapBorders(hello)
     })
     .on('user changed', (newUsers: string[]) => {
       users.set(newUsers)
@@ -98,8 +104,8 @@ export function connect(user: string) {
       winner.set(undefined)
       running.set(true)
       score.set(initScore)
-      lastInfo.positions.ball = undefined
-      lastInfo.positions.players = []
+      ground.ball = undefined
+      ground.players = []
     })
     .on('game goal', (newScore: Score) => {
       score.set(newScore)
@@ -108,27 +114,49 @@ export function connect(user: string) {
       stopEngine()
     })
     .on('r', (newPositions: number[]) => {
-      const base: PlayerPosition[] = []
+      if (!lastInfo.options) return
+      const { ballRadius, playerRadius } = lastInfo.options
+      const base: Block[] = []
       if (newPositions.length < 2) return
-      lastInfo.positions.ball = {
-        x: newPositions.shift() as number,
-        y: newPositions.shift() as number,
-      }
-      lastInfo.positions.players = newPositions.reduce(
-        (result, value, index, array) => {
-          if (index % 3 === 0) {
-            const [x, y, shoot] = array.slice(index, index + 3)
-            result.push({ x, y, shoot: shoot === 1 })
-          }
-          return result
+      ground.ball = {
+        circle: {
+          x: newPositions.shift() as number,
+          y: newPositions.shift() as number,
+          r: ballRadius,
         },
-        base,
-      )
+        color: borderColor,
+        stroke: '#000',
+      }
+      let teamCount = 0
+      ground.players = newPositions.reduce((result, value, index, array) => {
+        if (index % 3 === 0) {
+          const [x, y, shoot] = array.slice(index, index + 3)
+          const color = teamCount % 2 === 0 ? team1Color : team2Color
+          const stroke = shoot ? '#fff' : '#000'
+          const block: Block = {
+            circle: { x, y, r: playerRadius },
+            color,
+            stroke,
+          }
+          result.push(block)
+          ++teamCount
+        }
+        return result
+      }, base)
     })
     .on('game winner', (team: string) => {
       stopEngine()
       winner.set(team)
     })
+
+  function mapBorders({ ground }: Hello) {
+    return [
+      ...ground.borders.map(border => ({ ...border, color: borderColor })),
+      { ...ground.goal1, color: team1Color },
+      { ...ground.goal2, color: team2Color },
+    ]
+  }
+
   return new Promise((resolve, reject) => {
     if (!socket) {
       reject()
@@ -139,6 +167,14 @@ export function connect(user: string) {
       ready.set(true)
     })
   })
+}
+
+export function getVar(name: string) {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(
+    name,
+  )
+  if (!value) throw new Error(`oh no, i could not find css var ${name}`)
+  return value
 }
 
 export function emit(message: string) {

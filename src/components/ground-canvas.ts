@@ -1,53 +1,27 @@
 import { get } from 'svelte/store'
-import { Block } from '../types'
-import { lastInfo, players } from './stores'
-
-interface Options {
-  x?: number
-  y?: number
-  color?: string
-  stroke?: string
-  text?: string
-  font?: string
-}
+import { Block, Circle } from '../types'
+import { lastInfo, ground, players, getVar } from './stores'
 
 export function startRender(ctx: CanvasRenderingContext2D) {
-  const borderColor = getVar('--accent')
-  const team1Color = getVar('--team1')
-  const team2Color = getVar('--team2')
   const font = getVar('--font')
   let frame: number
   const draw = () => {
-    const { ground, positions, options } = lastInfo
-    if (!ground || !options) {
+    const { options } = lastInfo
+    if (!options) {
       return
     }
     ctx.save()
     ctx.clearRect(0, 0, options.width, options.height)
-    ground.borders.forEach(block =>
-      drawBlock(ctx, block, { color: borderColor }),
-    )
-    drawBlock(ctx, ground.goal1, { color: team1Color })
-    drawBlock(ctx, ground.goal2, { color: team2Color })
-    const ballOpts = positions.ball ? positions.ball : {}
-    drawBlock(ctx, ground.ball, {
-      ...ballOpts,
-      color: borderColor,
-      stroke: '#000',
-    })
+    ground.borders.forEach(block => drawBlock(ctx, block))
+    if (ground.ball) {
+      drawBlock(ctx, ground.ball)
+    }
     ground.players.forEach((block, index) => {
-      const playerOpt = positions.players[index]
-        ? positions.players[index]
-        : { shoot: false }
+      drawBlock(ctx, block)
       const player = get(players)[index]
-
-      drawBlock(ctx, block, {
-        ...playerOpt,
-        stroke: playerOpt.shoot ? '#fff' : '#000',
-        color: index % 2 === 0 ? team1Color : team2Color,
-        text: player,
-        font,
-      })
+      if (player && block.circle) {
+        drawText(ctx, block.circle, font, player)
+      }
     })
     ctx.restore()
 
@@ -61,20 +35,15 @@ export function startRender(ctx: CanvasRenderingContext2D) {
   }
 }
 
-function drawBlock(
-  ctx: CanvasRenderingContext2D,
-  { rect, circle }: Block,
-  options: Options = {},
-) {
-  const { color, stroke } = options
-  const { x, y, text, font } = { x: 0, y: 0, ...rect, ...rect, ...options }
+function drawBlock(ctx: CanvasRenderingContext2D, block: Block) {
+  const { rect, circle, color, stroke } = block
   if (rect) {
-    const { w, h } = { ...rect, ...options }
+    const { x, y, w, h } = rect
     ctx.beginPath()
     ctx.rect(x, y, w, h)
   }
   if (circle) {
-    const { r } = { ...circle, ...options }
+    const { x, y, r } = circle
     ctx.beginPath()
     ctx.arc(x, y, r, 0, 2 * Math.PI)
   }
@@ -89,16 +58,14 @@ function drawBlock(
     ctx.strokeStyle = stroke
     ctx.stroke()
   }
-  if (text && font) {
-    ctx.font = '30px ' + font
-    ctx.fillText(text, x - 25, y + 65)
-  }
 }
 
-function getVar(name: string) {
-  const value = getComputedStyle(document.documentElement).getPropertyValue(
-    name,
-  )
-  if (!value) throw new Error(`oh no, i could not find css var ${name}`)
-  return value
+function drawText(
+  ctx: CanvasRenderingContext2D,
+  { x, y, r }: Circle,
+  font: string,
+  text: string,
+) {
+  ctx.font = '30px ' + font
+  ctx.fillText(text, x - r, y + 2 * r + 20)
 }
