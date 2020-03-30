@@ -45,9 +45,7 @@ export function gameEngine(
   const { maxGoal } = options
   const borderOptions: IChamferableBodyDefinition = {
     isStatic: true,
-    restitution: options.border.restitution,
-    friction: options.border.friction,
-    slop: 0,
+    ...options.border,
   }
   const goal1Options: IChamferableBodyDefinition = {
     label: 'team2',
@@ -60,22 +58,22 @@ export function gameEngine(
     isSensor: true,
   }
   const playerOptions: IChamferableBodyDefinition = {
-    slop: 0,
-    frictionAir: options.player.frictionAir,
-    mass: options.player.mass,
-    inertia: options.player.inertia,
+    ...options.player,
   }
   const ballOptions: IChamferableBodyDefinition = {
     label: 'ball',
-    restitution: options.ball.restitution,
-    frictionAir: options.ball.frictionAir,
-    slop: 0,
+    ...options.ball,
   }
 
   const engine = Engine.create({ velocityIterations: 16 })
   const world = engine.world
   world.gravity = { x: 0, y: 0, scale: 1 }
-  const { players, ball } = drawGround(ground, world, options.player.force)
+  const { players, ball } = drawGround(
+    ground,
+    world,
+    options.moveForce,
+    options.shootForce,
+  )
   const defaultPositions = {
     ball: { ...ball.position },
     players: players.map(({ body }) => ({ ...body.position })),
@@ -205,35 +203,9 @@ export function gameEngine(
       ballVelocity.y = clamp
     }
     Body.setVelocity(ball, ballVelocity)
-    clampPosition(ball)
     players.forEach(player => {
       player.update()
-      clampPosition(player.body)
     })
-  }
-
-  function clampPosition(body: BodyClass) {
-    const projectedX = body.position.x + body.velocity.x
-    const projectedY = body.position.y + body.velocity.y
-
-    if (projectedX > options.width) {
-      Body.setPosition(body, {
-        x: options.width - options.margin,
-        y: body.position.y,
-      })
-    }
-    if (projectedX < 0) {
-      Body.setPosition(body, { x: options.margin, y: body.position.y })
-    }
-    if (projectedY > options.height) {
-      Body.setPosition(body, {
-        x: body.position.x,
-        y: options.height - 2 * options.margin,
-      })
-    }
-    if (projectedY < 0) {
-      Body.setPosition(body, { x: body.position.x, y: 0 + 2 * options.margin })
-    }
   }
 
   function handleTableReset() {
@@ -247,7 +219,12 @@ export function gameEngine(
       Body.setAngularVelocity(body, 0)
     })
   }
-  function drawGround(ground: Ground, world: WorldClass, force: number) {
+  function drawGround(
+    ground: Ground,
+    world: WorldClass,
+    moveForce: number,
+    shootForce: number,
+  ) {
     const all: (BodyClass | ConstraintClass)[] = []
     ground.borders.forEach(elem => draw(all, elem, borderOptions))
     const goal1 = draw(all, ground.goal1, goal1Options)
@@ -267,7 +244,7 @@ export function gameEngine(
         label,
       })
       all.push(Constraint.create({ bodyA: body, bodyB: sensor }))
-      return new Player(body, ball, force)
+      return new Player(body, ball, moveForce, shootForce)
     })
     World.add(world, all as any)
     return { goal1, goal2, players, ball }
@@ -279,6 +256,7 @@ export function gameEngine(
     options: IChamferableBodyDefinition,
   ) {
     let body: BodyClass | undefined
+    delete options.inertia
     if (elem.rect) {
       const { x, y, w, h } = elem.rect
       body = Bodies.rectangle(x + w / 2, y + h / 2, w, h, options)
@@ -312,12 +290,19 @@ const defaultKeys = {
 class Player {
   body: BodyClass
   ball: BodyClass
-  force: number
+  moveForce: number
+  shootForce: number
   keys: Keys = { ...defaultKeys }
   hasBall = false
-  constructor(body: BodyClass, ball: BodyClass, force: number) {
+  constructor(
+    body: BodyClass,
+    ball: BodyClass,
+    moveForce: number,
+    shootForce: number,
+  ) {
     this.body = body
-    this.force = force
+    this.moveForce = moveForce
+    this.shootForce = shootForce
     this.ball = ball
   }
   keyPress(code: number) {
@@ -339,17 +324,16 @@ class Player {
   }
   update() {
     const forceVector = { x: 0, y: 0 }
-    if (this.keys.left) forceVector.x = forceVector.x - this.force
-    if (this.keys.right) forceVector.x = forceVector.x + this.force
-    if (this.keys.up) forceVector.y = forceVector.y - this.force
-    if (this.keys.down) forceVector.y = forceVector.y + this.force
+    if (this.keys.left) forceVector.x = forceVector.x - this.moveForce
+    if (this.keys.right) forceVector.x = forceVector.x + this.moveForce
+    if (this.keys.up) forceVector.y = forceVector.y - this.moveForce
+    if (this.keys.down) forceVector.y = forceVector.y + this.moveForce
     Body.applyForce(this.body, this.body.position, forceVector)
 
     if (this.keys.shoot && this.hasBall) {
-      const force = 0.1
       const deltaVector = Vector.sub(this.ball.position, this.body.position)
       const normalizedDelta = Vector.normalise(deltaVector)
-      const forceVector = Vector.mult(normalizedDelta, force)
+      const forceVector = Vector.mult(normalizedDelta, this.shootForce)
       Body.applyForce(this.ball, this.ball.position, forceVector)
     }
   }

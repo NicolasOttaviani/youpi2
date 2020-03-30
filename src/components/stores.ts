@@ -17,6 +17,7 @@ export interface LastInfo {
   user: string
   ground: Ground | undefined
   options: Options | undefined
+  defaultOptions: Options | undefined
   positions: {
     ball: Position | undefined
     players: PlayerPosition[]
@@ -55,6 +56,7 @@ export const lastInfo: LastInfo = {
   user: '',
   ground: undefined,
   options: undefined,
+  defaultOptions: undefined,
   positions: {
     ball: undefined,
     players: [],
@@ -75,11 +77,16 @@ export function connect(user: string) {
       players.set(hello.players)
       running.set(hello.running)
       messages.set(hello.messages)
+      lastInfo.defaultOptions = hello.defaultOptions
       lastInfo.options = hello.options
       lastInfo.ground = hello.ground
     })
     .on('message', (message: Message) => {
       messages.update($messages => [...$messages, message])
+    })
+    .on('options', (config: { options: Options; ground: Ground }) => {
+      lastInfo.options = config.options
+      lastInfo.ground = config.ground
     })
     .on('user changed', (newUsers: string[]) => {
       users.set(newUsers)
@@ -164,6 +171,11 @@ export function start() {
 export function stop() {
   if (!socket || !get(running)) return
   socket.emit('game stop')
+}
+
+export function saveConfig(options: Options) {
+  if (!socket) return
+  socket.emit('options', options)
 }
 
 export function configureClose() {

@@ -3,31 +3,41 @@ import { Server } from 'socket.io'
 import { GameEngine, gameEngine } from './game-engine'
 import { ground } from './ground'
 
+const matterDefaultStaticOpts = {
+  restitution: 0,
+  slop: 0.05,
+}
+const matterDefaultBodyOpts = {
+  ...matterDefaultStaticOpts,
+  friction: 0.1,
+  frictionAir: 0.01,
+}
+
 const CHAT_FILO_SIZE = 10
-const defaultOpts: Options = {
+const defaultOptions: Options = {
   maxGoal: 2,
+  moveForce: 0.05,
+  shootForce: 0.1,
   player: {
-    force: 0.05,
+    ...matterDefaultBodyOpts,
     frictionAir: 0.05,
     mass: 40,
-    spaceMass: 80,
-    inertia: 0,
   },
   ball: {
+    ...matterDefaultBodyOpts,
     mass: 1,
     restitution: 0.5,
     frictionAir: 0.02,
   },
   border: {
+    ...matterDefaultStaticOpts,
     restitution: 0.2,
-    friction: 0,
   },
   height: 600,
   width: 1800,
   ballRadius: 20,
   playerRadius: 30,
   goalSize: 200,
-  margin: 50,
 }
 
 interface Player {
@@ -40,7 +50,8 @@ export function game(io: Server) {
   const users: string[] = []
   const players: Player[] = []
   let engine: GameEngine | undefined
-  const currentGround = ground(defaultOpts)
+  let options: Options = JSON.parse(JSON.stringify(defaultOptions))
+  let currentGround = ground(options)
   io.on('connection', socket => {
     const user: string = socket.handshake.query.user
     users.push(user)
@@ -90,7 +101,7 @@ export function game(io: Server) {
             }
           },
         },
-        defaultOpts,
+        options,
       )
       io.emit('game start')
     })
@@ -104,6 +115,12 @@ export function game(io: Server) {
     socket.on('disconnect', () => {
       logout()
       socket.broadcast.emit('user changed', users)
+    })
+
+    socket.on('options', (newOptions: Options) => {
+      options = newOptions
+      currentGround = ground(options)
+      io.emit('options', { options, ground: currentGround })
     })
 
     function logout() {
@@ -163,7 +180,8 @@ export function game(io: Server) {
         running: engine !== undefined,
         players: mapPlayers(),
         score: mapScore(),
-        options: defaultOpts,
+        options: defaultOptions,
+        defaultOptions,
       }
     }
 

@@ -9,12 +9,14 @@
     stop,
     isPlaying,
     winner,
+    saveConfig,
   } from './stores'
   import Chat from './Chat.svelte'
   import Arrow from './Arrow.svelte'
   import StartButton from './StartButton.svelte'
   import BackButton from './BackButton.svelte'
   import PickPlayerButton from './PickPlayerButton.svelte'
+  import Configuration from './Configuration.svelte'
   import { tweened } from 'svelte/motion'
   import { cubicOut } from 'svelte/easing'
 
@@ -28,7 +30,7 @@
   if (lock.exitPointerLock) lock.exitPointerLock()
   let player1, player2
   let hidden = true
-
+  let configPage = false
   players.subscribe($players => {
     player1 = $players[0]
     player2 = $players[1]
@@ -54,6 +56,14 @@ function pick(index: number) {
     back()
   }
 
+  function showConfig () {
+    configPage = true
+  }
+
+  function hideConfig(){
+    configPage = false
+  }
+
   async function back() {
     hidden = true
     lock.requestPointerLock()
@@ -66,6 +76,49 @@ function pick(index: number) {
     hidden = false
   })
 </script>
+
+{#if configPage}
+  <Configuration on:close={hideConfig} on:save={({detail}) => saveConfig(detail)} />
+{/if}
+
+<div class="left" style={`transform: translateX(-${$transform}px);`}>
+  <div class="team team1">
+    <h3 class:winner={$winner === 'team1'}>Team 1</h3>
+    <PickPlayerButton team1={true} on:click={() => pick(0)} bind:player={player1} />
+  </div>
+
+</div>
+<div class="right" style={`transform: translateX(${$transform}px)`}>
+  <div class="team team2">
+    <h3 class:winner={$winner === 'team2'}>Team 2</h3>
+    <PickPlayerButton team1={false} on:click={() => pick(1)} bind:player={player2} />
+  </div>
+</div>
+<div class="actions" class:hidden>
+  <h2>Choose your Team</h2>
+  <Arrow top={55} left={335} />
+  <Arrow top={55} left={30} reverse={true}  />
+
+  <div class="description">
+    <p>Use the arrow keys to move the player and use the spacebar to shoot</p>
+    <img src="arrow-keys.png" alt="keyboard-arrows-example" />
+  </div>
+
+  <div class="start">
+    <StartButton on:start={startGame} on:stop={stopGame} />
+  </div>
+
+  <div class="back" on:click={backGame}>
+    <BackButton on:back={backGame} />
+  </div>
+  <p class="last">
+  <!--  You can <button class="link" on:click={showConfig}>configure</button> the game (at your own risk) -->
+  </p>
+</div>
+<div class="bottom" style={`transform: translateY(${$transform}px)`}>
+  <Chat />
+</div>
+
 
 <style lang="scss">
   $bottom: 300px;
@@ -143,7 +196,7 @@ function pick(index: number) {
   }
 
   .actions {
-    width: 400px;
+    width: 550px;
     color: var(--on-accent);
     height: 100vh;
     margin: 0 auto;
@@ -157,25 +210,24 @@ function pick(index: number) {
       transition: opacity 0.5s;
     }
     h2 {
-      margin: 10px 0 0 -180px;
+      margin: 20px 0 0 -180px;
     }
     .start,
     .back {
       position: absolute;
+      top: 260px;
     }
     .start {
-      left: 120px;
-      top: 350px;
+      left: 150px;
     }
     .back {
-      right: -20px;
-      top: 350px;
+      right: 80px;
     }
 
     .description {
       position: absolute;
-      top: 150px;
-      left: 30px;
+      top: 130px;
+      left: 85px;
       width: 330px;
       display: flex;
       justify-content: center;
@@ -189,8 +241,17 @@ function pick(index: number) {
         flex: 1;
       }
     }
-  }
 
+    .last {
+      margin-top: 335px;
+      margin-left: 185px;
+    }
+  }
+/*
+  button.link {
+      color: var(--primary);
+  }
+*/
   @media (max-height: 700px) {
     .left,
     .right {
@@ -201,38 +262,3 @@ function pick(index: number) {
     }
   }
 </style>
-
-<div class="left" style={`transform: translateX(-${$transform}px);`}>
-  <div class="team team1">
-    <h3 class:winner={$winner === 'team1'}>Team 1</h3>
-    <PickPlayerButton team1={true} on:click={() => pick(0)} bind:player={player1} />
-  </div>
-
-</div>
-<div class="right" style={`transform: translateX(${$transform}px)`}>
-  <div class="team team2">
-    <h3 class:winner={$winner === 'team2'}>Team 2</h3>
-    <PickPlayerButton team1={false} on:click={() => pick(1)} bind:player={player2} />
-  </div>
-</div>
-<div class="actions" class:hidden>
-  <h2>Choose your Team</h2>
-  <Arrow top={55} left={270} />
-  <Arrow reverse={true} top={55} left={-35} />
-
-  <div class="description">
-    <p>Use the arrow keys to move the player and use the spacebar to shoot</p>
-    <img src="arrow-keys.png" alt="keyboard-arrows-example" />
-  </div>
-
-  <div class="start">
-    <StartButton on:start={startGame} on:stop={stopGame} />
-  </div>
-
-  <div class="back" on:click={backGame}>
-    <BackButton on:back={backGame} />
-  </div>
-</div>
-<div class="bottom" style={`transform: translateY(${$transform}px)`}>
-  <Chat />
-</div>

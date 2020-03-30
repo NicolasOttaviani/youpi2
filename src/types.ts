@@ -13,6 +13,7 @@ export interface Hello {
   running: boolean
   options: Options
   messages: Message[]
+  defaultOptions: Options
 }
 
 export interface Message {
@@ -35,27 +36,26 @@ export interface Movement {
   movementY: number
 }
 
+export interface StaticBodyOptions {
+  restitution: number /* 0 */
+  slop: number /* 0.05 */
+}
+
+export interface BodyOptions extends StaticBodyOptions {
+  friction: number /* 0.1 */
+  frictionAir: number /* 0.01 */
+  mass: number
+}
+
 export interface GameEngineOptions {
   maxGoal: number
+  moveForce: number
+  shootForce: number
   width: number
   height: number
-  margin: number
-  player: {
-    spaceMass: number
-    force: number
-    frictionAir: number
-    mass: number
-    inertia: number
-  }
-  border: {
-    restitution: number
-    friction: number
-  }
-  ball: {
-    restitution: number
-    frictionAir: number
-    mass: number
-  }
+  player: BodyOptions
+  border: StaticBodyOptions
+  ball: BodyOptions
 }
 export interface GroundOptions {
   width: number
