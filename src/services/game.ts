@@ -38,6 +38,7 @@ const defaultOptions: Options = {
   ballRadius: 20,
   playerRadius: 30,
   goalSize: 200,
+  borderSize: 40,
 }
 
 interface Player {

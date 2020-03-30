@@ -130,6 +130,10 @@
       <span>Goal size</span>
       <Slider bind:value={config.goalSize} min={0} max={1000} step={1} />
     </label>
+    <label>
+      <span>Border size</span>
+      <Slider bind:value={config.borderSize} min={0} max={1000} step={1} />
+    </label>
     <ConfigurationBody
       bind:value={config.border}
       on:help={({ detail }) => help(detail)}

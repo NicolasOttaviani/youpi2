@@ -6,8 +6,8 @@ export function ground({
   ballRadius,
   playerRadius,
   goalSize,
+  borderSize,
 }: GroundOptions): Ground {
-  const borderSize = 2 * ballRadius
   const borderXSize = width - 2 * borderSize
   const semiBorderYSize = (height - goalSize) / 2
   const borders = [

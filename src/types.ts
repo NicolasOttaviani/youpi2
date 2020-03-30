@@ -63,6 +63,7 @@ export interface GroundOptions {
   ballRadius: number
   playerRadius: number
   goalSize: number
+  borderSize: number
 }
 
 export type Options = GameEngineOptions & GroundOptions
