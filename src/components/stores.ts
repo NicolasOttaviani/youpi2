@@ -188,6 +188,11 @@ export function connect(user: string) {
       resolve(ground)
       ready.set(true)
     })
+    socket.on('reject', () => {
+      reject(new Error('This name is already in use. Please choose another.'))
+      if (!socket) return
+      socket.close()
+    })
   })
 }
 

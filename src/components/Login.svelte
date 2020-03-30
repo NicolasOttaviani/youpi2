@@ -7,6 +7,7 @@
   const dispatch = createEventDispatcher()
   let ref
   let user = ''
+  let errorMessage = ''
 
   const transform = tweened(0, {
     duration: 2000,
@@ -23,9 +24,13 @@
 
   async function submit() {
     if (user !== '') {
-      await connect(user)
-      await transform.set(1400)
-      dispatch('login', user)
+      try {
+        await connect(user)
+        await transform.set(1400)
+        dispatch('login', user)
+      } catch (error) {
+        errorMessage = error.message
+      }
     }
   }
 
@@ -58,6 +63,11 @@
     button {
       margin-left: -96px;
       padding: 12px 36px;
+    }
+
+    .error {
+      text-align: center;
+      color: var(--team2);
     }
   }
   .left,
@@ -106,6 +116,7 @@
         bind:value={user}
         bind:this={ref} />
       <button type="submit" disabled={!user}>Enter</button>
+      <p class="error">{errorMessage}</p>
     </form>
   </div>
 </div>

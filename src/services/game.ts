@@ -53,8 +53,14 @@ export function game(io: Server) {
   let engine: GameEngine | undefined
   let options: Options = JSON.parse(JSON.stringify(defaultOptions))
   let currentGround = ground(options)
+  let rejected = false
   io.on('connection', socket => {
     const user: string = socket.handshake.query.user
+    if (users.indexOf(user) >= 0) {
+      rejected = true
+      socket.emit('reject')
+      return
+    }
     users.push(user)
     socket.emit('hello', mapHello())
     socket.broadcast.emit('user changed', users)
@@ -114,6 +120,7 @@ export function game(io: Server) {
     })
 
     socket.on('disconnect', () => {
+      if (rejected) return
       logout()
       socket.broadcast.emit('user changed', users)
     })
