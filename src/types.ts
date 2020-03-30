@@ -71,8 +71,12 @@ export type Options = GameEngineOptions & GroundOptions
 export interface Block {
   rect?: Rect
   circle?: Circle
-  color?: string
-  stroke?: string
+  render?: {
+    color?: string
+    stroke?: string
+    text?: string
+    font?: string
+  }
 }
 
 export interface Ground {

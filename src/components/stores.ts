@@ -10,6 +10,7 @@ import {
   PlayerPosition,
   Options,
   IS_A_KEYS,
+  KEYS,
 } from '../types'
 import { onDestroy } from 'svelte'
 
@@ -23,6 +24,7 @@ export interface PlayGround {
   borders: Block[]
   ball: undefined | Block
   players: Block[]
+  camera: Position | undefined
 }
 
 interface Emitter {
@@ -61,8 +63,9 @@ export const lastInfo: LastInfo = {
 
 export const ground: PlayGround = {
   borders: [],
-  ball: undefined,
   players: [],
+  ball: undefined,
+  camera: undefined,
 }
 
 function stopEngine() {
@@ -73,6 +76,7 @@ export function connect(user: string) {
   const team1Color = getVar('--team1')
   const team2Color = getVar('--team2')
   const borderColor = getVar('--accent')
+  const font = getVar('--font')
 
   lastInfo.user = user
   socket = io({ query: { user } })
@@ -105,6 +109,7 @@ export function connect(user: string) {
       running.set(true)
       score.set(initScore)
       ground.ball = undefined
+      ground.camera = undefined
       ground.players = []
     })
     .on('game goal', (newScore: Score) => {
@@ -118,25 +123,39 @@ export function connect(user: string) {
       const { ballRadius, playerRadius } = lastInfo.options
       const base: Block[] = []
       if (newPositions.length < 2) return
+      const ball = {
+        x: newPositions.shift() as number,
+        y: newPositions.shift() as number,
+      }
       ground.ball = {
         circle: {
-          x: newPositions.shift() as number,
-          y: newPositions.shift() as number,
+          ...ball,
           r: ballRadius,
         },
-        color: borderColor,
-        stroke: '#000',
+        render: {
+          color: borderColor,
+          stroke: '#000',
+        },
       }
+      ground.camera = ball
       let teamCount = 0
       ground.players = newPositions.reduce((result, value, index, array) => {
         if (index % 3 === 0) {
           const [x, y, shoot] = array.slice(index, index + 3)
           const color = teamCount % 2 === 0 ? team1Color : team2Color
+          const player = get(players)[index]
           const stroke = shoot ? '#fff' : '#000'
           const block: Block = {
             circle: { x, y, r: playerRadius },
-            color,
-            stroke,
+            render: {
+              color,
+              stroke,
+              font,
+              text: player,
+            },
+          }
+          if (player === user) {
+            ground.camera = { x, y }
           }
           result.push(block)
           ++teamCount
@@ -151,9 +170,12 @@ export function connect(user: string) {
 
   function mapBorders({ ground }: Hello) {
     return [
-      ...ground.borders.map(border => ({ ...border, color: borderColor })),
-      { ...ground.goal1, color: team1Color },
-      { ...ground.goal2, color: team2Color },
+      ...ground.borders.map(border => ({
+        ...border,
+        render: { color: borderColor },
+      })),
+      { ...ground.goal1, render: { color: team1Color } },
+      { ...ground.goal2, render: { color: team2Color } },
     ]
   }
 
@@ -169,7 +191,7 @@ export function connect(user: string) {
   })
 }
 
-export function getVar(name: string) {
+function getVar(name: string) {
   const value = getComputedStyle(document.documentElement).getPropertyValue(
     name,
   )
@@ -184,12 +206,14 @@ export function emit(message: string) {
 
 export function keyPress(code: number) {
   if (!socket || !get(isPlaying)) return
+  if (code === 17) code = KEYS.SHOOT
   if (!IS_A_KEYS(code)) return
   socket.emit('game keypress', code)
 }
 
 export function keyRelease(code: number) {
   if (!socket || !get(isPlaying)) return
+  if (code === 17) code = KEYS.SHOOT
   if (!IS_A_KEYS(code)) return
   socket.emit('game keyrelease', code)
 }

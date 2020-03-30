@@ -2,16 +2,10 @@
   import { get } from 'svelte/store'
   import { getContext, createEventDispatcher } from 'svelte'
   import { startRender } from './ground-canvas'
-  import {
-    lastInfo,
-    isPlaying,
-    keyPress,
-    keyRelease,
-    players,
-    score,
-  } from './stores'
-  const { width, height } = lastInfo.options
+  import { isPlaying, keyPress, keyRelease, players, score } from './stores'
   const lock = getContext('lock')
+  let width
+  let height
 
   const dispatch = createEventDispatcher()
   function init(canvas: HTMLCanvasElement) {
@@ -69,9 +63,12 @@
     canvas {
       display: block;
       margin: 0px auto;
+      margin: 10px;
     }
   }
 </style>
+
+<svelte:window bind:innerHeight={height} bind:innerWidth={width} />
 
 <section>
   <main>
