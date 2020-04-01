@@ -1,6 +1,6 @@
 # youpi2
 
-Little football game inspired by haxball.
+Little football game inspired by haxball. Demo: https://youpi2.herokuapp.com/
 
 ## Description
 
