@@ -118,6 +118,7 @@ export function game(io: Server) {
       if (messages.length > CHAT_FILO_SIZE) {
         messages.shift()
       }
+      return data
     }
   })
 }

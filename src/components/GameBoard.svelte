@@ -72,7 +72,7 @@
 
   running.subscribe(running => {
     if (running && !configPage) {
-      back();
+      back()
     }
   })
 </script>
