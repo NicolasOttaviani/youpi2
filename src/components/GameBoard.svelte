@@ -69,6 +69,12 @@
     await transform.set(0)
     hidden = false
   })
+
+  running.subscribe(running => {
+    if (running && !configPage) {
+      back();
+    }
+  })
 </script>
 
 <style lang="scss">
