@@ -74,11 +74,12 @@ button {
   color: var(--on-accent);
 }
 
-button:hover {
+button:not(:disabled):hover {
   box-shadow: 0 0 14px 4px rgba(0, 0, 0, 0.2);
 }
 button:disabled,
 button[disabled] {
+  cursor: default;
   background-color: var(--disabled);
   color: var(--color);
 }

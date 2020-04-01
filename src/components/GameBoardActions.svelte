@@ -90,25 +90,28 @@
   <Arrow top={55} left={335} />
   <Arrow top={55} left={30} reverse={true} />
 
-  <div class="config" class:disabled={$running}>
+  <div class="config">
     <button
       class:active={$playerPerTeam === 1}
-      on:click={() => configurePerTeam(1)}>
+      on:click={() => configurePerTeam(1)}
+      disabled={$running}>
       1v1
     </button>
     <button
       class:active={$playerPerTeam === 2}
-      on:click={() => configurePerTeam(2)}>
+      on:click={() => configurePerTeam(2)}
+      disabled={$running}>
       2v2
     </button>
     {#if $playerPerTeam <= 3}
       <button
         class:active={$playerPerTeam === 3}
-        on:click={() => configurePerTeam(3)}>
+        on:click={() => configurePerTeam(3)}
+        disabled={$running}>
         3v3
       </button>
     {:else}
-      <button>Custom</button>
+      <button disabled={true}>Custom</button>
     {/if}
   </div>
 
