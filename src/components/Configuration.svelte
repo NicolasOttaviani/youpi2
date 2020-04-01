@@ -7,7 +7,7 @@
   import ConfigurationBody from './ConfigurationBody.svelte'
   import Help from './ConfigurationHelp.svelte'
   import { defaultOptions } from '../services/default-options'
-  let config = (config = JSON.parse(JSON.stringify(ground.options)))
+  let config = JSON.parse(JSON.stringify(ground.options))
   const dispatch = createEventDispatcher()
   const transform = tweened(1400, {
     duration: 1500,
@@ -145,6 +145,10 @@
     <label>
       <span>Max goal to win</span>
       <Slider bind:value={config.maxGoal} min={1} max={10} step={1} />
+    </label>
+    <label>
+      <span>Player per team</span>
+      <Slider bind:value={config.playerPerTeam} min={1} max={10} step={1} />
     </label>
     <p>The changes will be applied to the next game.</p>
     <div>

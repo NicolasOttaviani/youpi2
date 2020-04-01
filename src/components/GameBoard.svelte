@@ -189,6 +189,7 @@
   on:back={backGame}
   on:start={startGame}
   on:stop={stopGame}
+  on:showConfig={showConfig}
   on:saveConfig={({ detail }) => saveOptions(detail)} />
 
 <div class="bottom" style={`transform: translateY(${$transform}px)`}>

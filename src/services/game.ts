@@ -55,7 +55,6 @@ export function game(io: Server) {
     socket.emit('hello', mapHello())
     socket.broadcast.emit('user changed', users.users())
     socket.on('options', (options: Options) => {
-      if (board.running()) return
       board.updateOptions(options)
     })
 

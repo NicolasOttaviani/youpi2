@@ -73,11 +73,12 @@
       }
     }
 
-    /*
   button.link {
       color: var(--primary);
+      &:hover {
+        box-shadow: none;
+      }
   }
-*/
     .last {
       margin-top: 335px;
       margin-left: 185px;
@@ -127,7 +128,9 @@
   <div class="back">
     <BackButton on:back />
   </div>
+  {#if !$running}
   <p class="last">
-    <!--  You can <button class="link" on:click={showConfig}>configure</button> the game (at your own risk) -->
+     You can <button class="link" on:click={() => dispatch('showConfig')}>configure</button> the game (at your own risk) 
   </p>
+  {/if}
 </div>
