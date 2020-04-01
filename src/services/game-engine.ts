@@ -295,8 +295,8 @@ class PlayerBody {
     this.index = index
     this.body = body
     this.sensor = sensor
-    this.moveForce = moveForce
-    this.shootForce = shootForce
+    this.moveForce = moveForce / 10
+    this.shootForce = shootForce / 10
   }
   keyPress(code: number) {
     if (code === KEYS.LEFT) this.keys.left = true

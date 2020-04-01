@@ -97,11 +97,11 @@
     </label>
     <label>
       <span>Move force</span>
-      <Slider bind:value={config.moveForce} />
+      <Slider bind:value={config.moveForce} max={2} />
     </label>
     <label>
       <span>Shoot force</span>
-      <Slider bind:value={config.shootForce} />
+      <Slider bind:value={config.shootForce} max={2} />
     </label>
     <ConfigurationBody
       bind:value={config.player}
