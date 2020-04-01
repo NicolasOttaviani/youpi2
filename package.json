@@ -1,6 +1,6 @@
 {
   "name": "youpi2",
-  "description": "youpi2",
+  "description": "Little football game inspired by haxball.",
   "version": "0.0.1",
   "license": "MIT",
   "scripts": {
