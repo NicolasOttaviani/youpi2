@@ -85,7 +85,7 @@ function buildOffsetCamera(
     x = x > width ? width : x
   }
   if (height > canvas.height) {
-    y = camera.y < canvas.height / 2 ? 0 : camera.y - canvas.height
+    y = camera.y < canvas.height / 2 ? 0 : camera.y - canvas.height / 2
     y = y > height ? height : y
   }
   return { x, y }
