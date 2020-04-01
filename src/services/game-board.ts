@@ -53,6 +53,7 @@ export function gameBoard() {
           emitter.emit('refresh', ball, players)
         },
       })
+      score.reset()
       return engine
     },
     stop,
