@@ -1,48 +1,193 @@
-import {
-  Ground,
-  Block,
-  GameEngineOptions,
-  Position,
-  PlayerPosition,
-  KEYS,
-} from '../types'
+import { Ground, Block, Options, Position, KEYS } from '../types'
+import { generateGround } from './ground'
 import {
   default as Matter,
   IEventCollision,
   IChamferableBodyDefinition,
   Body as BodyClass,
-  World as WorldClass,
   IPair,
-  Constraint as ConstraintClass,
 } from 'matter-js'
 
-export interface GameEngineCallbacks {
-  goal: (team: string) => void
-  winner: (team: string) => void
-  refresh: (ball: Position, players: PlayerPosition[]) => void
+export interface PlayerPosition extends Position {
+  shoot: boolean
+  index: number
 }
 
-const { Engine, Bodies, World, Events, Body, Vector, Constraint } = Matter
+export interface GameEngineCallbacks {
+  refresh: (ball: Position, players: PlayerPosition[]) => void
+  goal: (team: string) => void
+}
 
-export interface Score {
-  team1: number
-  team2: number
+const { Engine, Bodies, World, Events, Body, Vector } = Matter
+
+export interface Player {
+  index: number
 }
 
 export interface GameEngine {
-  destroy(): void
-  getScore(): Score
+  addPlayer(index: number): void
+  removePlayer(index: number): void
+  resetPositions(): void
   keyPress(index: number, code: number): void
   keyRelease(index: number, code: number): void
+  destroy(): void
 }
 
 export function gameEngine(
-  ground: Ground,
+  options: Options,
   callbacks: GameEngineCallbacks,
-  options: GameEngineOptions,
 ): GameEngine {
-  const { goal, winner, refresh } = callbacks
-  const { maxGoal } = options
+  const engine = Engine.create({ velocityIterations: 16 })
+  const { goal, refresh } = callbacks
+  const world = engine.world
+  world.gravity = { x: 0, y: 0, scale: 1 }
+  const pause = false
+  const players: PlayerBody[] = []
+  const { ground, borders } = createGround(options)
+  World.add(world, borders)
+  const ball = createBall(ground, options)
+  World.add(world, ball)
+
+  Engine.run(engine)
+  Events.on(engine, 'beforeUpdate', handleBeforeUpdate)
+  Events.on(engine, 'afterUpdate', handleAfterUpdate)
+  Events.on(engine, 'collisionStart', handleCollisionStart)
+  Events.on(engine, 'collisionEnd', handleCollisionEnd)
+
+  return {
+    addPlayer(index) {
+      const player = createPlayer(index, ground, options)
+      World.add(world, [player.body, player.sensor])
+      players.push(player)
+    },
+    removePlayer(index) {
+      const toRemove = players.findIndex(p => p.index === index)
+      const player = players[toRemove]
+      if (toRemove > -1) players.splice(toRemove, 1)
+      World.remove(world, player.body)
+      World.remove(world, player.sensor)
+    },
+    keyPress(index, code) {
+      const player = players.find(p => p.index === index)
+      if (!player) throw new Error('oh no i could not find player?!')
+      player.keyPress(code)
+    },
+    keyRelease(index, code) {
+      const player = players.find(p => p.index === index)
+      if (!player) throw new Error('oh no i could not find player?!')
+      player.keyRelease(code)
+    },
+    resetPositions() {
+      Body.setPosition(ball, ground.getBallDefaultPosition())
+      Body.setVelocity(ball, { x: 0, y: 0 })
+      players.forEach(p => {
+        p.hasBall = undefined
+        Body.setPosition(p.body, ground.getPlayerDefaultPosition(p.index))
+        Body.setVelocity(p.body, { x: 0, y: 0 })
+      })
+    },
+    destroy() {
+      World.clear(world, false)
+      Engine.clear(engine)
+      Events.off(engine, 'beforeUpdate', handleBeforeUpdate)
+      Events.off(engine, 'afterUpdate', handleAfterUpdate)
+      Events.off(engine, 'collisionStart', handleCollisionStart)
+      Events.off(engine, 'collisionEnd', handleCollisionEnd)
+    },
+  }
+
+  function handleCollisionStart(event: IEventCollision<void>) {
+    if (pause) return
+    event.pairs.forEach(pair => {
+      handleGoalCollistion(pair)
+      handleBallCollision(pair)
+    })
+  }
+
+  function handleCollisionEnd(event: IEventCollision<void>) {
+    if (pause) return
+    event.pairs.forEach(pair => {
+      const typeA: string = pair.bodyA.label
+      const typeB: string = pair.bodyB.label
+
+      if (typeA === 'ball') {
+        if (typeB.indexOf('player') > -1) {
+          const index = parseInt(typeB.substring(6))
+          const player = players.find(p => p.index === index)
+          if (!player) {
+            throw new Error('oh no i found collision with a phantom player :(')
+          }
+          player.hasBall = undefined
+        }
+      }
+    })
+  }
+
+  function handleBallCollision(pair: IPair) {
+    const typeA: string = pair.bodyA.label
+    const typeB: string = pair.bodyB.label
+    if (typeA === 'ball') {
+      if (typeB.indexOf('player') > -1) {
+        const index = parseInt(typeB.substring(6))
+        const player = players.find(p => p.index === index)
+        if (!player) {
+          throw new Error('oh no i found collision with a phantom player :(')
+        }
+        player.hasBall = pair.bodyA
+      }
+    }
+  }
+
+  function handleGoalCollistion(pair: IPair) {
+    if (pause) return
+    const typeA: string = pair.bodyA.label
+    const typeB: string = pair.bodyB.label
+    if (typeB === 'ball') {
+      if (typeA === 'team1') {
+        goal('team1')
+      } else if (typeA === 'team2') {
+        goal('team2')
+      }
+    }
+  }
+
+  function handleBeforeUpdate() {
+    clampPositions()
+  }
+
+  function handleAfterUpdate() {
+    const ballPosition = roudPosition(ball.position)
+    const playersPositions = players.reduce((result, player) => {
+      if (player === undefined) return result
+      const position = roudPosition(player.body.position)
+      result.push({
+        ...position,
+        shoot: player.keys.shoot,
+        index: player.index,
+      })
+      return result
+    }, [] as PlayerPosition[])
+    refresh(ballPosition, playersPositions)
+  }
+
+  function clampPositions() {
+    const clamp = 60
+    const ballVelocity = ball.velocity
+    if (ball.velocity.x > clamp) {
+      ballVelocity.x = clamp
+    }
+    if (ball.velocity.y > clamp) {
+      ballVelocity.y = clamp
+    }
+    Body.setVelocity(ball, ballVelocity)
+    players.forEach(player => {
+      if (player === undefined) return
+      player.update()
+    })
+  }
+}
+
+function createGround(options: Options) {
   const borderOptions: IChamferableBodyDefinition = {
     isStatic: true,
     ...options.border,
@@ -57,221 +202,66 @@ export function gameEngine(
     isStatic: true,
     isSensor: true,
   }
-  const playerOptions: IChamferableBodyDefinition = {
-    ...options.player,
+
+  const ground = generateGround(options)
+  return {
+    ground,
+    borders: [
+      ...ground.borders.map(elem => draw(elem, borderOptions)),
+      draw(ground.goal1, goal1Options),
+      draw(ground.goal2, goal2Options),
+    ],
   }
+}
+function createBall(ground: Ground, options: Options) {
   const ballOptions: IChamferableBodyDefinition = {
     label: 'ball',
     ...options.ball,
   }
-
-  const engine = Engine.create({ velocityIterations: 16 })
-  const world = engine.world
-  world.gravity = { x: 0, y: 0, scale: 1 }
-  const { players, ball } = drawGround(
-    ground,
-    world,
-    options.moveForce,
-    options.shootForce,
+  const ball = draw(
+    ground.getBall(ground.getBallDefaultPosition()),
+    ballOptions,
   )
-  const defaultPositions = {
-    ball: { ...ball.position },
-    players: players.map(({ body }) => ({ ...body.position })),
-  }
-  const score: Score = {
-    team1: 0,
-    team2: 0,
-  }
-  let pause = false
-
-  Engine.run(engine)
-  Events.on(engine, 'beforeUpdate', handleBeforeUpdate)
-  Events.on(engine, 'afterUpdate', handleAfterUpdate)
-  Events.on(engine, 'collisionStart', handleCollisionStart)
-  Events.on(engine, 'collisionEnd', handleCollisionEnd)
-
-  return {
-    keyPress(index, code) {
-      const player = players[index]
-      if (!player) throw new Error(`Could not find player index '${index}`)
-      player.keyPress(code)
-    },
-    keyRelease(index, code) {
-      const player = players[index]
-      if (!player) throw new Error(`Could not find player index '${index}`)
-      player.keyRelease(code)
-    },
-    getScore() {
-      return score
-    },
-    destroy() {
-      Events.off(engine, 'beforeUpdate', handleBeforeUpdate)
-      Events.off(engine, 'afterUpdate', handleAfterUpdate)
-      Events.off(engine, 'collisionStart', handleCollisionStart)
-      Events.off(engine, 'collisionEnd', handleCollisionEnd)
-    },
-  }
-
-  function handleCollisionStart(event: IEventCollision<void>) {
-    event.pairs.forEach(pair => {
-      handleGoalCollistion(pair)
-      handleBallCollision(pair)
-    })
-  }
-
-  function handleCollisionEnd(event: IEventCollision<void>) {
-    event.pairs.forEach(pair => {
-      const typeA: string = pair.bodyA.label
-      const typeB: string = pair.bodyB.label
-
-      if (typeA === ballOptions.label) {
-        if (typeB.indexOf('player') > -1) {
-          const index = parseInt(typeB.substring(6))
-          const player = players[index]
-          player.hasBall = false
-        }
-      }
-    })
-  }
-
-  function handleBallCollision(pair: IPair) {
-    const typeA: string = pair.bodyA.label
-    const typeB: string = pair.bodyB.label
-    if (typeA === ballOptions.label) {
-      if (typeB.indexOf('player') > -1) {
-        const index = parseInt(typeB.substring(6))
-        const player = players[index]
-        player.hasBall = true
-      }
-    }
-  }
-
-  function handleGoalCollistion(pair: IPair) {
-    if (pause) return
-    const typeA: string = pair.bodyA.label
-    const typeB: string = pair.bodyB.label
-    let newScore: number | undefined
-    if (typeB === ballOptions.label) {
-      if (typeA === goal2Options.label) {
-        score.team1 += 1
-        newScore = score.team1
-      } else if (typeA === goal1Options.label) {
-        score.team2 += 1
-        newScore = score.team2
-      }
-      if (newScore !== undefined) {
-        if (newScore >= maxGoal) {
-          pause = true
-          setTimeout(() => {
-            winner(typeA)
-            pause = false
-          }, 1000)
-          return
-        }
-        pause = true
-        setTimeout(() => {
-          handleTableReset()
-          handleBeforeUpdate()
-          goal(typeA)
-          pause = false
-        }, 1000)
-      }
-    }
-  }
-
-  function handleBeforeUpdate() {
-    clampPositions()
-  }
-
-  function handleAfterUpdate() {
-    refresh(
-      ball.position,
-      players.map(({ body, keys }) => ({
-        ...body.position,
-        shoot: keys.shoot,
-      })),
-    )
-  }
-
-  function clampPositions() {
-    const clamp = 60
-    const ballVelocity = ball.velocity
-    if (ball.velocity.x > clamp) {
-      ballVelocity.x = clamp
-    }
-    if (ball.velocity.y > clamp) {
-      ballVelocity.y = clamp
-    }
-    Body.setVelocity(ball, ballVelocity)
-    players.forEach(player => {
-      player.update()
-    })
-  }
-
-  function handleTableReset() {
-    Body.setPosition(ball, defaultPositions.ball)
-    Body.setVelocity(ball, { x: 0, y: 0 })
-    Body.setAngularVelocity(ball, 0)
-    defaultPositions.players.forEach((position, index) => {
-      const { body } = players[index]
-      Body.setPosition(body, position)
-      Body.setVelocity(body, { x: 0, y: 0 })
-      Body.setAngularVelocity(body, 0)
-    })
-  }
-  function drawGround(
-    ground: Ground,
-    world: WorldClass,
-    moveForce: number,
-    shootForce: number,
-  ) {
-    const all: (BodyClass | ConstraintClass)[] = []
-    ground.borders.forEach(elem => draw(all, elem, borderOptions))
-    const goal1 = draw(all, ground.goal1, goal1Options)
-    const goal2 = draw(all, ground.goal2, goal2Options)
-    const ball = draw(all, ground.ball, ballOptions)
-    const players = ground.players.map((elem, index) => {
-      const label = `player${index}`
-      const body = draw(all, elem, { ...playerOptions, label })
-      if (!elem.circle) {
-        throw new Error('Oh no, i need to implement rectangle player')
-      }
-      const sensorElem = {
-        circle: { x: elem.circle.x, y: elem.circle.y, r: elem.circle.r + 5 },
-      }
-      const sensor = draw(all, sensorElem, {
-        isSensor: true,
-        label,
-      })
-      all.push(Constraint.create({ bodyA: body, bodyB: sensor }))
-      return new Player(body, ball, moveForce, shootForce)
-    })
-    World.add(world, all as any)
-    return { goal1, goal2, players, ball }
-  }
-
-  function draw(
-    bodies: (BodyClass | ConstraintClass)[],
-    elem: Block,
-    options: IChamferableBodyDefinition,
-  ) {
-    let body: BodyClass | undefined
-    delete options.inertia
-    if (elem.rect) {
-      const { x, y, w, h } = elem.rect
-      body = Bodies.rectangle(x + w / 2, y + h / 2, w, h, options)
-    } else if (elem.circle) {
-      const { x, y, r } = elem.circle
-      body = Bodies.circle(x, y, r, options)
-    }
-    if (!body) {
-      throw new Error('Could not find rect or circle ?!')
-    }
-    bodies.push(body)
-    return body
-  }
+  return ball
 }
 
+function createPlayer(index: number, ground: Ground, options: Options) {
+  const { shootForce, moveForce } = options
+  const playerOptions: IChamferableBodyDefinition = {
+    ...options.player,
+  }
+
+  const label = `player${index}`
+  const defaultPosition = ground.getPlayerDefaultPosition(index)
+  const elem = ground.getPlayer(defaultPosition)
+  const body = draw(elem, { ...playerOptions, label })
+  if (!elem.circle) {
+    throw new Error('Oh no, i need to implement rectangle player')
+  }
+  const sensorElem = {
+    circle: { x: elem.circle.x, y: elem.circle.y, r: elem.circle.r + 5 },
+  }
+  const sensor = draw(sensorElem, {
+    isSensor: true,
+    label,
+  })
+  return new PlayerBody(index, body, sensor, moveForce, shootForce)
+}
+
+function draw(elem: Block, options: IChamferableBodyDefinition) {
+  let body: BodyClass | undefined
+  if (elem.rect) {
+    const { x, y, w, h } = elem.rect
+    body = Bodies.rectangle(x + w / 2, y + h / 2, w, h, options)
+  } else if (elem.circle) {
+    const { x, y, r } = elem.circle
+    body = Bodies.circle(x, y, r, options)
+  }
+  if (!body) {
+    throw new Error('Could not find rect or circle ?!')
+  }
+  return body
+}
 interface Keys {
   up: boolean
   down: boolean
@@ -287,23 +277,26 @@ const defaultKeys = {
   shoot: false,
 }
 
-class Player {
+class PlayerBody {
+  index: number
   body: BodyClass
-  ball: BodyClass
+  sensor: BodyClass
   moveForce: number
   shootForce: number
   keys: Keys = { ...defaultKeys }
-  hasBall = false
+  hasBall: BodyClass | undefined
   constructor(
+    index: number,
     body: BodyClass,
-    ball: BodyClass,
+    sensor: BodyClass,
     moveForce: number,
     shootForce: number,
   ) {
+    this.index = index
     this.body = body
+    this.sensor = sensor
     this.moveForce = moveForce
     this.shootForce = shootForce
-    this.ball = ball
   }
   keyPress(code: number) {
     if (code === KEYS.LEFT) this.keys.left = true
@@ -331,10 +324,18 @@ class Player {
     Body.applyForce(this.body, this.body.position, forceVector)
 
     if (this.keys.shoot && this.hasBall) {
-      const deltaVector = Vector.sub(this.ball.position, this.body.position)
+      const deltaVector = Vector.sub(this.hasBall.position, this.body.position)
       const normalizedDelta = Vector.normalise(deltaVector)
       const forceVector = Vector.mult(normalizedDelta, this.shootForce)
-      Body.applyForce(this.ball, this.ball.position, forceVector)
+      Body.applyForce(this.hasBall, this.hasBall.position, forceVector)
     }
+  }
+}
+
+function roudPosition<T extends Position>(p: T) {
+  return {
+    ...p,
+    x: Math.round(p.x),
+    y: Math.round(p.y),
   }
 }

@@ -2,11 +2,12 @@
   import { onMount, createEventDispatcher, tick } from 'svelte'
   import { tweened } from 'svelte/motion'
   import { cubicOut } from 'svelte/easing'
-  import { lastInfo } from './stores'
+  import { ground } from './stores'
   import Slider from './Slider.svelte'
   import ConfigurationBody from './ConfigurationBody.svelte'
   import Help from './ConfigurationHelp.svelte'
-  let config = JSON.parse(JSON.stringify(lastInfo.options))
+  import { defaultOptions } from '../services/default-options'
+  let config = (config = JSON.parse(JSON.stringify(ground.options)))
   const dispatch = createEventDispatcher()
   const transform = tweened(1400, {
     duration: 1500,
@@ -25,11 +26,11 @@
   }
 
   function reset() {
-    config = JSON.parse(JSON.stringify(lastInfo.options))
+    config = JSON.parse(JSON.stringify(ground.options))
   }
 
   function restore() {
-    config = JSON.parse(JSON.stringify(lastInfo.defaultOptions))
+    config = defaultOptions()
   }
 
   async function help(type) {

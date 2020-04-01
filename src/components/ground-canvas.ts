@@ -1,12 +1,12 @@
-import { Block, Options, Position } from '../types'
-import { lastInfo, ground } from './stores'
+import { Block, Position } from '../types'
+import { ground } from './stores'
 
 export function startRender(ctx: CanvasRenderingContext2D) {
   let frame: number
   const draw = () => {
-    const { options } = lastInfo
+    const { options } = ground
     if (!options) return
-    const offset = buildOffsetCamera(ctx)
+    const offset = buildOffsetCamera(ctx, options.width, options.height)
     ctx.save()
     ctx.clearRect(0, 0, 3000, 3000)
     ground.borders.forEach(block => drawBlock(ctx, block, offset))
@@ -71,8 +71,11 @@ function drawBlock(
   }
 }
 
-function buildOffsetCamera(ctx: CanvasRenderingContext2D) {
-  const { width, height } = lastInfo.options as Options
+function buildOffsetCamera(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+) {
   const { canvas } = ctx
   const camera = ground.camera || { x: 0, y: 0 }
   let x = 0

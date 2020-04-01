@@ -2,7 +2,8 @@
   import { get } from 'svelte/store'
   import { getContext, createEventDispatcher } from 'svelte'
   import { startRender } from './ground-canvas'
-  import { isPlaying, keyPress, keyRelease, players, score } from './stores'
+  import { isPlaying, keyPress, keyRelease } from './stores'
+  import ScoreBoard from './ScoreBoard.svelte'
   const lock = getContext('lock')
   let width
   let height
@@ -54,12 +55,7 @@
     width: 100vw;
     position: absolute;
     top: 0;
-    p {
-      font-family: var(--font);
-      text-align: center;
-      font-size: 25px;
-      margin: 0 0 10px 0;
-    }
+
     canvas {
       display: block;
       margin: 0px auto;
@@ -72,9 +68,7 @@
 
 <section>
   <main>
-    <p>
-      {$players[0] || 'Nobody'}: {$score.team1} / {$players[1] || 'Nobody'}: {$score.team2}
-    </p>
+    <ScoreBoard />
     <canvas
       use:init
       {width}

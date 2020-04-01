@@ -1,12 +1,13 @@
 import { GroundOptions, Ground } from '../types'
 
-export function ground({
+export function generateGround({
   width,
   height,
   ballRadius,
   playerRadius,
   goalSize,
   borderSize,
+  playerPerTeam,
 }: GroundOptions): Ground {
   const borderXSize = width - 2 * borderSize
   const semiBorderYSize = (height - goalSize) / 2
@@ -50,9 +51,6 @@ export function ground({
       },
     },
   ]
-  const ball = {
-    circle: { x: width / 2 - ballRadius, y: height / 2, r: ballRadius },
-  }
   const goal1 = {
     rect: { x: 0, y: semiBorderYSize, w: borderSize, h: goalSize },
   }
@@ -64,21 +62,25 @@ export function ground({
       h: goalSize,
     },
   }
-  const players = [
-    {
-      type: 'player',
-      circle: { x: 0 + 4 * borderSize, y: height / 2, r: playerRadius },
-    },
-    {
-      type: 'player',
-      circle: { x: width - 4 * borderSize, y: height / 2, r: playerRadius },
-    },
-  ]
   return {
     borders,
     goal1,
     goal2,
-    ball,
-    players,
+    getBallDefaultPosition: () => ({
+      x: width / 2 - ballRadius,
+      y: height / 2,
+    }),
+    getBall: ({ x, y }) => ({
+      circle: { x, y, r: ballRadius },
+    }),
+    getPlayerDefaultPosition(index) {
+      if (index % 2 === 0) {
+        return { x: 0 + 4 * borderSize, y: height / 2 }
+      }
+      return { x: width - 4 * borderSize, y: height / 2 }
+    },
+    getPlayer: ({ x, y }) => ({
+      circle: { x, y, r: playerRadius },
+    }),
   }
 }

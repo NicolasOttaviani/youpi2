@@ -3,13 +3,13 @@
   import { get } from 'svelte/store'
   import {
     running,
-    players,
     pickPlayer,
     start,
     stop,
-    isPlaying,
     winner,
-    saveConfig,
+    saveOptions,
+    team1,
+    team2,
   } from './stores'
   import Chat from './Chat.svelte'
   import Arrow from './Arrow.svelte'
@@ -31,10 +31,6 @@
   let player1, player2
   let hidden = true
   let configPage = false
-  players.subscribe($players => {
-    player1 = $players[0]
-    player2 = $players[1]
-  })
 
   function pick(index: number) {
     pickPlayer(index)
@@ -223,26 +219,29 @@
 {#if configPage}
   <Configuration
     on:close={hideConfig}
-    on:save={({ detail }) => saveConfig(detail)} />
+    on:save={({ detail }) => saveOptions(detail)} />
 {/if}
 
 <div class="left" style={`transform: translateX(-${$transform}px);`}>
   <div class="team team1">
     <h3 class:winner={$winner === 'team1'}>Team 1</h3>
-    <PickPlayerButton
-      team1={true}
-      on:click={() => pick(0)}
-      bind:player={player1} />
+    {#each $team1 as user, index}
+      <PickPlayerButton
+        team1={true}
+        on:click={() => pick(index * 2)}
+        player={user} />
+    {/each}
   </div>
-
 </div>
 <div class="right" style={`transform: translateX(${$transform}px)`}>
   <div class="team team2">
     <h3 class:winner={$winner === 'team2'}>Team 2</h3>
-    <PickPlayerButton
-      team1={false}
-      on:click={() => pick(1)}
-      bind:player={player2} />
+    {#each $team2 as user, index}
+      <PickPlayerButton
+        team1={false}
+        on:click={() => pick(index * 2 + 1)}
+        player={user} />
+    {/each}
   </div>
 </div>
 <div class="actions" class:hidden>

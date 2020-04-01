@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte'
-  import { emit, lastInfo, messages, users } from './stores'
+  import { emit, messages, users } from './stores'
   import dayjs from 'dayjs'
   import relativeTime from 'dayjs/plugin/relativeTime'
   import 'dayjs/locale/fr'
@@ -98,7 +98,7 @@
 <section>
   <aside>
     <ul>
-      {#each $users as user}
+      {#each $users as { user }}
         <li>{user}</li>
       {/each}
     </ul>

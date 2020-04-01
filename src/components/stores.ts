@@ -1,30 +1,25 @@
 import io from 'socket.io-client'
 import { Writable, writable, derived, get } from 'svelte/store'
 import {
+  User,
   Message,
   Score,
   Hello,
-  Players,
   Block,
   Position,
-  PlayerPosition,
   Options,
   IS_A_KEYS,
   KEYS,
 } from '../types'
 import { onDestroy } from 'svelte'
-
-export interface LastInfo {
-  user: string
-  options: Options | undefined
-  defaultOptions: Options | undefined
-}
+import { generateGround } from '../services/ground'
 
 export interface PlayGround {
   borders: Block[]
   ball: undefined | Block
   players: Block[]
   camera: Position | undefined
+  options: Options | undefined
 }
 
 interface Emitter {
@@ -42,67 +37,81 @@ const initScore = {
   team2: 0,
 }
 
+let user: string | undefined
+let socket: Socket | undefined
+const playerPerTeam: Writable<number> = writable(0)
+
 export const messages: Writable<Message[]> = writable([])
-export const users: Writable<string[]> = writable([])
-export const players: Writable<Players> = writable([])
+export const users: Writable<User[]> = writable([])
 export const score: Writable<Score> = writable(initScore)
 export const running: Writable<boolean> = writable(false)
 export const winner: Writable<string | undefined> = writable(undefined)
 export const ready: Writable<boolean> = writable(false)
-export const isPlaying = derived(players, players => {
-  if (!socket || !players) return undefined
-  const player = players.find(p => p === lastInfo.user)
+export const team1 = derived([users, playerPerTeam], ([users, playerPerTeam]) =>
+  deriveUser(users, playerPerTeam, 0),
+)
+export const team2 = derived([users, playerPerTeam], ([users, playerPerTeam]) =>
+  deriveUser(users, playerPerTeam, 1),
+)
+export const isPlaying = derived(users, users => {
+  if (!socket) return false
+  const player = users.find(u => u.user === user && u.index > -1)
   return player !== undefined
 })
-let socket: Socket | undefined
-export const lastInfo: LastInfo = {
-  user: '',
-  options: undefined,
-  defaultOptions: undefined,
-}
 
 export const ground: PlayGround = {
   borders: [],
   players: [],
   ball: undefined,
   camera: undefined,
+  options: undefined,
+}
+
+function deriveUser(users: User[], playerPerTeam: number, modulo: number) {
+  const team = users.reduce((result, user) => {
+    if (user.index > -1) {
+      if (user.index % 2 === modulo) {
+        const index = Math.trunc(user.index / 2)
+        result[index] = user.user
+      }
+    }
+    return result
+  }, [] as string[])
+  team.length = playerPerTeam
+  return team
 }
 
 function stopEngine() {
   running.set(false)
 }
 
-export function connect(user: string) {
+export function connect(login: string) {
   const team1Color = getVar('--team1')
   const team2Color = getVar('--team2')
   const borderColor = getVar('--accent')
   const font = getVar('--font')
 
-  lastInfo.user = user
+  user = login
   socket = io({ query: { user } })
   socket
     .on('hello', (hello: Hello) => {
       users.set(hello.users)
       score.set(hello.score)
-      players.set(hello.players)
       running.set(hello.running)
       messages.set(hello.messages)
-      lastInfo.defaultOptions = hello.defaultOptions
-      lastInfo.options = hello.options
-      ground.borders = mapBorders(hello)
+      updateOptions(hello.options)
     })
     .on('message', (message: Message) => {
       messages.update($messages => [...$messages, message])
     })
-    .on('options', (hello: Hello) => {
-      lastInfo.options = hello.options
-      ground.borders = mapBorders(hello)
+    .on('options', (options: Options) => {
+      updateOptions(options)
     })
-    .on('user changed', (newUsers: string[]) => {
+    .on('user changed', (newUsers: User[]) => {
       users.set(newUsers)
     })
-    .on('game pick player', newPlayers => {
-      players.set(newPlayers)
+    .on('game pick player', (newUsers: User[]) => {
+      users.set(newUsers)
     })
     .on('game start', () => {
       winner.set(undefined)
@@ -119,8 +128,8 @@ export function connect(user: string) {
       stopEngine()
     })
     .on('r', (newPositions: number[]) => {
-      if (!lastInfo.options) return
-      const { ballRadius, playerRadius } = lastInfo.options
+      if (!ground.options) return
+      const { ballRadius, playerRadius } = ground.options
       const base: Block[] = []
       if (newPositions.length < 2) return
       const ball = {
@@ -138,12 +147,13 @@ export function connect(user: string) {
         },
       }
       ground.camera = ball
-      let teamCount = 0
       ground.players = newPositions.reduce((result, value, index, array) => {
-        if (index % 3 === 0) {
-          const [x, y, shoot] = array.slice(index, index + 3)
-          const color = teamCount % 2 === 0 ? team1Color : team2Color
-          const player = get(players)[index]
+        if (index % 4 === 0) {
+          const [x, y, shoot, i] = array.slice(index, index + 4)
+          const color = i % 2 === 0 ? team1Color : team2Color
+          const player = get(users).find((user: User) => user.index === i)
+          let text = ''
+          if (player) text = player.user
           const stroke = shoot ? '#fff' : '#000'
           const block: Block = {
             circle: { x, y, r: playerRadius },
@@ -151,14 +161,13 @@ export function connect(user: string) {
               color,
               stroke,
               font,
-              text: player,
+              text,
             },
           }
-          if (player === user) {
+          if (text === user) {
             ground.camera = { x, y }
           }
           result.push(block)
-          ++teamCount
         }
         return result
       }, base)
@@ -168,15 +177,19 @@ export function connect(user: string) {
       winner.set(team)
     })
 
-  function mapBorders({ ground }: Hello) {
-    return [
-      ...ground.borders.map(border => ({
+  function updateOptions(options: Options) {
+    const newGround = generateGround(options)
+    const borders = [
+      ...newGround.borders.map(border => ({
         ...border,
         render: { color: borderColor },
       })),
-      { ...ground.goal1, render: { color: team1Color } },
-      { ...ground.goal2, render: { color: team2Color } },
+      { ...newGround.goal1, render: { color: team1Color } },
+      { ...newGround.goal2, render: { color: team2Color } },
     ]
+    ground.borders = borders
+    ground.options = options
+    playerPerTeam.set(options.playerPerTeam)
   }
 
   return new Promise((resolve, reject) => {
@@ -184,8 +197,8 @@ export function connect(user: string) {
       reject()
       return
     }
-    socket.on('hello', ({ ground }: Hello) => {
-      resolve(ground)
+    socket.on('hello', () => {
+      resolve()
       ready.set(true)
     })
     socket.on('reject', () => {
@@ -238,7 +251,7 @@ export function stop() {
   socket.emit('game stop')
 }
 
-export function saveConfig(options: Options) {
+export function saveOptions(options: Options) {
   if (!socket) return
   socket.emit('options', options)
 }
