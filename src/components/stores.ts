@@ -89,6 +89,7 @@ export function connect(login: string) {
   const team1Color = getVar('--team1')
   const team2Color = getVar('--team2')
   const borderColor = getVar('--accent')
+  const shootColor = getVar('--primary')
   const font = getVar('--font')
 
   user = login
@@ -154,7 +155,7 @@ export function connect(login: string) {
           const player = get(users).find((user: User) => user.index === i)
           let text = ''
           if (player) text = player.user
-          const stroke = shoot ? '#fff' : '#000'
+          const stroke = shoot ? shootColor : '#000'
           const block: Block = {
             circle: { x, y, r: playerRadius },
             render: {
