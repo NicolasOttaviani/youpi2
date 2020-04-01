@@ -1,5 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, getContext, onMount } from 'svelte'
+  import { tweened } from 'svelte/motion'
+  import { cubicOut } from 'svelte/easing'
   import { get } from 'svelte/store'
   import {
     running,
@@ -12,13 +14,9 @@
     team2,
   } from './stores'
   import Chat from './Chat.svelte'
-  import Arrow from './Arrow.svelte'
-  import StartButton from './StartButton.svelte'
-  import BackButton from './BackButton.svelte'
   import PickPlayerButton from './PickPlayerButton.svelte'
   import Configuration from './Configuration.svelte'
-  import { tweened } from 'svelte/motion'
-  import { cubicOut } from 'svelte/easing'
+  import GameBoardActions from './GameBoardActions.svelte'
 
   const dispatch = createEventDispatcher()
   const lock = getContext('lock')
@@ -75,7 +73,6 @@
 
 <style lang="scss">
   $bottom: 300px;
-
   .left,
   .right,
   .bottom {
@@ -137,8 +134,7 @@
     }
   }
 
-  h3,
-  h2 {
+  :global(h3, h2) {
     font-size: 2em;
     font-family: var(--font);
     text-align: center;
@@ -148,63 +144,6 @@
     padding: 30px 0 30px 0;
   }
 
-  .actions {
-    width: 550px;
-    color: var(--on-accent);
-    height: 100vh;
-    margin: 0 auto;
-    position: relative;
-    z-index: 8;
-    opacity: 1;
-    transition: opacity 0.5s;
-
-    &.hidden {
-      opacity: 0;
-      transition: opacity 0.5s;
-    }
-    h2 {
-      margin: 20px 0 0 -180px;
-    }
-    .start,
-    .back {
-      position: absolute;
-      top: 260px;
-    }
-    .start {
-      left: 150px;
-    }
-    .back {
-      right: 80px;
-    }
-
-    .description {
-      position: absolute;
-      top: 130px;
-      left: 85px;
-      width: 330px;
-      display: flex;
-      justify-content: center;
-      align-content: center;
-      & > img {
-        max-width: 100px;
-        max-height: 75px;
-      }
-      & > p {
-        margin: 0;
-        flex: 1;
-      }
-    }
-
-    .last {
-      margin-top: 335px;
-      margin-left: 185px;
-    }
-  }
-  /*
-  button.link {
-      color: var(--primary);
-  }
-*/
   @media (max-height: 700px) {
     .left,
     .right {
@@ -244,27 +183,14 @@
     {/each}
   </div>
 </div>
-<div class="actions" class:hidden>
-  <h2>Choose your Team</h2>
-  <Arrow top={55} left={335} />
-  <Arrow top={55} left={30} reverse={true} />
 
-  <div class="description">
-    <p>Use the arrow keys to move the player and use the spacebar to shoot</p>
-    <img src="arrow-keys.png" alt="keyboard-arrows-example" />
-  </div>
+<GameBoardActions
+  bind:hidden
+  on:back={backGame}
+  on:start={startGame}
+  on:stop={stopGame}
+  on:saveConfig={({ detail }) => saveOptions(detail)} />
 
-  <div class="start">
-    <StartButton on:start={startGame} on:stop={stopGame} />
-  </div>
-
-  <div class="back" on:click={backGame}>
-    <BackButton on:back={backGame} />
-  </div>
-  <p class="last">
-    <!--  You can <button class="link" on:click={showConfig}>configure</button> the game (at your own risk) -->
-  </p>
-</div>
 <div class="bottom" style={`transform: translateY(${$transform}px)`}>
   <Chat />
 </div>

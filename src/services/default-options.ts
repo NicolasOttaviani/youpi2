@@ -41,3 +41,25 @@ const DEFAULT_OPTIONS: Options = {
 export function defaultOptions() {
   return JSON.parse(JSON.stringify(DEFAULT_OPTIONS))
 }
+
+export function base(playerPerTeam: number) {
+  if (playerPerTeam === 1) {
+    return {
+      playerPerTeam: 1,
+      height: 600,
+      width: 1700,
+    }
+  }
+  if (playerPerTeam === 2) {
+    return {
+      playerPerTeam: 2,
+      height: 800,
+      width: 1850,
+    }
+  }
+  return {
+    playerPerTeam: 3,
+    height: 1200,
+    width: 2200,
+  }
+}

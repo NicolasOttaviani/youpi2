@@ -39,7 +39,6 @@ const initScore = {
 
 let user: string | undefined
 let socket: Socket | undefined
-const playerPerTeam: Writable<number> = writable(0)
 
 export const messages: Writable<Message[]> = writable([])
 export const users: Writable<User[]> = writable([])
@@ -47,6 +46,7 @@ export const score: Writable<Score> = writable(initScore)
 export const running: Writable<boolean> = writable(false)
 export const winner: Writable<string | undefined> = writable(undefined)
 export const ready: Writable<boolean> = writable(false)
+export const playerPerTeam: Writable<number> = writable(0)
 export const team1 = derived([users, playerPerTeam], ([users, playerPerTeam]) =>
   deriveUser(users, playerPerTeam, 0),
 )
