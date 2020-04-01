@@ -121,11 +121,11 @@
     <legend>Playground</legend>
     <label>
       <span>Width</span>
-      <Slider bind:value={config.width} min={0} max={2000} step={1} />
+      <Slider bind:value={config.width} min={0} max={10000} step={1} />
     </label>
     <label>
       <span>Height</span>
-      <Slider bind:value={config.height} min={0} max={1000} step={1} />
+      <Slider bind:value={config.height} min={0} max={5000} step={1} />
     </label>
     <label>
       <span>Goal size</span>
