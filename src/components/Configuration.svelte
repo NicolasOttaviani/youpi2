@@ -101,7 +101,7 @@
     </label>
     <label>
       <span>Shoot force</span>
-      <Slider bind:value={config.shootForce} max={2} />
+      <Slider bind:value={config.shootForce} max={10} />
     </label>
     <ConfigurationBody
       bind:value={config.player}
