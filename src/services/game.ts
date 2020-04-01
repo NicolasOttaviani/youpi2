@@ -8,7 +8,6 @@ const CHAT_FILO_SIZE = 10
 
 export function game(io: Server) {
   const messages: Message[] = []
-  const frameCount = 0
   const users = gameUsers()
   const board = gameBoard()
   board.on('goal', (score: Score) => io.emit('game goal', score))
@@ -54,21 +53,17 @@ export function game(io: Server) {
     }
     socket.emit('hello', mapHello())
     socket.broadcast.emit('user changed', users.users())
+    socket.broadcast.emit(
+      'message',
+      buildMessage('System', `'${user}' has joined!`),
+    )
+
     socket.on('options', (options: Options) => {
       board.updateOptions(options)
     })
 
     socket.on('message', message => {
-      const data = {
-        message,
-        user,
-        timestamp: currentTimestamp(),
-      }
-      messages.push(data)
-      if (messages.length > CHAT_FILO_SIZE) {
-        messages.shift()
-      }
-      io.emit('message', data)
+      io.emit('message', buildMessage(user, message))
     })
     socket.on('game pick player', (index: number) => {
       if (board.running() && users.haveUser(index)) {
@@ -97,6 +92,10 @@ export function game(io: Server) {
       if (rejected) return
       users.unregister(user)
       socket.broadcast.emit('user changed', users.users())
+      socket.broadcast.emit(
+        'message',
+        buildMessage('System', `'${user}' has left`),
+      )
     })
 
     function mapHello(): Hello {
@@ -106,6 +105,18 @@ export function game(io: Server) {
         running: board.running(),
         score: board.score(),
         options: board.options(),
+      }
+    }
+
+    function buildMessage(user: string, message: string) {
+      const data = {
+        message,
+        user,
+        timestamp: currentTimestamp(),
+      }
+      messages.push(data)
+      if (messages.length > CHAT_FILO_SIZE) {
+        messages.shift()
       }
     }
   })
