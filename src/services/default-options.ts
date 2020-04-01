@@ -11,6 +11,7 @@ const matterDefaultBodyOpts = {
 }
 
 const DEFAULT_OPTIONS: Options = {
+  ...base(1),
   maxGoal: 2,
   moveForce: 0.05,
   shootForce: 0.1,
@@ -30,11 +31,8 @@ const DEFAULT_OPTIONS: Options = {
     ...matterDefaultStaticOpts,
     restitution: 0.2,
   },
-  height: 600,
-  width: 1800,
   ballRadius: 20,
   playerRadius: 30,
-  goalSize: 200,
   borderSize: 40,
 }
 
@@ -48,6 +46,7 @@ export function base(playerPerTeam: number) {
       playerPerTeam: 1,
       height: 600,
       width: 1700,
+      goalSize: 190,
     }
   }
   if (playerPerTeam === 2) {
@@ -55,11 +54,13 @@ export function base(playerPerTeam: number) {
       playerPerTeam: 2,
       height: 800,
       width: 1850,
+      goalSize: 210,
     }
   }
   return {
     playerPerTeam: 3,
-    height: 1200,
-    width: 2200,
+    height: 1100,
+    width: 2500,
+    goalSize: 260,
   }
 }
