@@ -24,6 +24,10 @@ export interface Player {
   index: number
 }
 
+const defaultCategoryFilter = 0x0001
+const ballCategoryFilter = 0x0002
+const playerCategoryFilter = 0x0004
+
 export interface GameEngine {
   addPlayer(index: number): void
   removePlayer(index: number): void
@@ -134,6 +138,7 @@ export function gameEngine(
           throw new Error('oh no i found collision with a phantom player :(')
         }
         player.hasBall = pair.bodyA
+        pair.restitution = 0
       }
     }
   }
@@ -152,7 +157,10 @@ export function gameEngine(
   }
 
   function handleBeforeUpdate() {
-    clampPositions()
+    players.forEach(player => {
+      if (player === undefined) return
+      player.update()
+    })
   }
 
   function handleAfterUpdate() {
@@ -169,28 +177,15 @@ export function gameEngine(
     }, [] as PlayerPosition[])
     refresh(ballPosition, playersPositions)
   }
-
-  function clampPositions() {
-    const clamp = 60
-    const ballVelocity = ball.velocity
-    if (ball.velocity.x > clamp) {
-      ballVelocity.x = clamp
-    }
-    if (ball.velocity.y > clamp) {
-      ballVelocity.y = clamp
-    }
-    Body.setVelocity(ball, ballVelocity)
-    players.forEach(player => {
-      if (player === undefined) return
-      player.update()
-    })
-  }
 }
 
 function createGround(options: Options) {
   const borderOptions: IChamferableBodyDefinition = {
     isStatic: true,
     ...options.border,
+    collisionFilter: {
+      category: defaultCategoryFilter,
+    },
   }
   const goal1Options: IChamferableBodyDefinition = {
     label: 'team2',
@@ -204,10 +199,11 @@ function createGround(options: Options) {
   }
 
   const ground = generateGround(options)
+  const borders = ground.borders.map(elem => draw(elem, borderOptions))
   return {
     ground,
     borders: [
-      ...ground.borders.map(elem => draw(elem, borderOptions)),
+      ...borders,
       draw(ground.goal1, goal1Options),
       draw(ground.goal2, goal2Options),
     ],
@@ -217,6 +213,10 @@ function createBall(ground: Ground, options: Options) {
   const ballOptions: IChamferableBodyDefinition = {
     label: 'ball',
     ...options.ball,
+    collisionFilter: {
+      category: ballCategoryFilter,
+      mask: ballCategoryFilter | playerCategoryFilter | defaultCategoryFilter,
+    },
   }
   const ball = draw(
     ground.getBall(ground.getBallDefaultPosition()),
@@ -229,6 +229,10 @@ function createPlayer(index: number, ground: Ground, options: Options) {
   const { shootForce, moveForce } = options
   const playerOptions: IChamferableBodyDefinition = {
     ...options.player,
+    collisionFilter: {
+      category: playerCategoryFilter,
+      mask: ballCategoryFilter | playerCategoryFilter,
+    },
   }
 
   const label = `player${index}`
@@ -244,6 +248,9 @@ function createPlayer(index: number, ground: Ground, options: Options) {
   const sensor = draw(sensorElem, {
     isSensor: true,
     label,
+    collisionFilter: {
+      mask: ballCategoryFilter,
+    },
   })
   return new PlayerBody(index, body, sensor, moveForce, shootForce)
 }
@@ -323,11 +330,16 @@ class PlayerBody {
     if (this.keys.down) forceVector.y = forceVector.y + this.moveForce
     Body.applyForce(this.body, this.body.position, forceVector)
 
-    if (this.keys.shoot && this.hasBall) {
-      const deltaVector = Vector.sub(this.hasBall.position, this.body.position)
-      const normalizedDelta = Vector.normalise(deltaVector)
-      const forceVector = Vector.mult(normalizedDelta, this.shootForce)
-      Body.applyForce(this.hasBall, this.hasBall.position, forceVector)
+    if (this.hasBall) {
+      if (this.keys.shoot) {
+        const deltaVector = Vector.sub(
+          this.hasBall.position,
+          this.body.position,
+        )
+        const normalizedDelta = Vector.normalise(deltaVector)
+        const forceVector = Vector.mult(normalizedDelta, this.shootForce)
+        Body.applyForce(this.hasBall, this.hasBall.position, forceVector)
+      }
     }
   }
 }
