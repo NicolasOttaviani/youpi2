@@ -53,7 +53,7 @@
     position: absolute;
     font-family: var(--font);
     top: 4px;
-    left: 22px;
+    left: 30px;
   }
 
   .arrow {
@@ -94,5 +94,5 @@
 
 <div class="button" class:running={$running} on:click={() => click($running)}>
   <div class="arrow right" />
-  <div class="text">BACK</div>
+  <div class="text">GO</div>
 </div>

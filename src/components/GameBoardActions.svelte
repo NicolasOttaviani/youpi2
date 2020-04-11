@@ -31,16 +31,16 @@
     h2 {
       margin: 20px 0 0 -180px;
     }
-    .start,
-    .back {
+    .button-left,
+    .button-right {
       position: absolute;
       top: 260px;
     }
-    .start {
-      left: 150px;
-    }
-    .back {
+    .button-right {
       right: 80px;
+    }
+    .button-left {
+      left: 150px;
     }
 
     .description {
@@ -121,11 +121,11 @@
     <img src="arrow-keys.png" alt="keyboard-arrows-example" />
   </div>
 
-  <div class="start">
+  <div class:button-left={!$running} class:button-right={$running}>
     <StartButton on:start on:stop />
   </div>
 
-  <div class="back">
+  <div class:button-left={$running} class:button-right={!$running}>
     <BackButton on:back />
   </div>
   <p class="last">
