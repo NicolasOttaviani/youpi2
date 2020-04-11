@@ -181,6 +181,18 @@ export function connect(login: string) {
   function updateOptions(options: Options) {
     const newGround = generateGround(options)
     const borders = [
+      {
+        circle: {
+          x: options.width / 2,
+          y: options.height / 2,
+          r: options.height / 4,
+        },
+        render: { stroke: shootColor },
+      },
+      {
+        rect: { x: options.width / 2, y: 0 / 2, w: 2, h: options.height },
+        render: { color: shootColor },
+      },
       ...newGround.borders.map(border => ({
         ...border,
         render: { color: borderColor },

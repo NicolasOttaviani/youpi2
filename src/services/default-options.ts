@@ -13,8 +13,8 @@ const matterDefaultBodyOpts = {
 const DEFAULT_OPTIONS: Options = {
   ...base(1),
   maxGoal: 2,
-  moveForce: 0.45,
-  shootForce: 0.65,
+  moveForce: 0.4,
+  shootForce: 0.55,
   playerPerTeam: 1,
   player: {
     ...matterDefaultBodyOpts,

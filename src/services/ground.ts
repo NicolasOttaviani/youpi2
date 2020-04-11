@@ -67,7 +67,7 @@ export function generateGround({
     goal1,
     goal2,
     getBallDefaultPosition: () => ({
-      x: width / 2 - ballRadius,
+      x: width / 2,
       y: height / 2,
     }),
     getBall: ({ x, y }) => ({
