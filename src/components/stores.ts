@@ -270,7 +270,7 @@ export function saveOptions(options: Options) {
 }
 
 export function configureClose() {
-  onDestroy(() => {
+  window.addEventListener('beforeunload', () => {
     if (!socket) return
     ready.set(false)
     socket.close()
