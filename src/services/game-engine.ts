@@ -5,6 +5,7 @@ import {
   IEventCollision,
   IChamferableBodyDefinition,
   Body as BodyClass,
+  Constraint as ConstraintClass,
   IPair,
 } from 'matter-js'
 
@@ -18,7 +19,7 @@ export interface GameEngineCallbacks {
   goal: (team: string) => void
 }
 
-const { Engine, Bodies, World, Events, Body, Vector } = Matter
+const { Engine, Bodies, World, Events, Body, Vector, Constraint } = Matter
 
 export interface Player {
   index: number
@@ -61,7 +62,9 @@ export function gameEngine(
   return {
     addPlayer(index) {
       const player = createPlayer(index, ground, options)
+
       World.add(world, [player.body, player.sensor])
+      World.add(world, player.constraint)
       players.push(player)
     },
     removePlayer(index) {
@@ -70,6 +73,7 @@ export function gameEngine(
       if (toRemove > -1) players.splice(toRemove, 1)
       World.remove(world, player.body)
       World.remove(world, player.sensor)
+      World.remove(world, player.constraint)
     },
     keyPress(index, code) {
       const player = players.find(p => p.index === index)
@@ -243,7 +247,11 @@ function createPlayer(index: number, ground: Ground, options: Options) {
     throw new Error('Oh no, i need to implement rectangle player')
   }
   const sensorElem = {
-    circle: { x: elem.circle.x, y: elem.circle.y, r: elem.circle.r + 5 },
+    circle: {
+      x: elem.circle.x,
+      y: elem.circle.y,
+      r: (elem.circle.r * 115) / 100,
+    },
   }
   const sensor = draw(sensorElem, {
     isSensor: true,
@@ -252,7 +260,11 @@ function createPlayer(index: number, ground: Ground, options: Options) {
       mask: ballCategoryFilter,
     },
   })
-  return new PlayerBody(index, body, sensor, moveForce, shootForce)
+  const constraint = Constraint.create({
+    bodyA: body,
+    bodyB: sensor,
+  })
+  return new PlayerBody(index, body, sensor, constraint, moveForce, shootForce)
 }
 
 function draw(elem: Block, options: IChamferableBodyDefinition) {
@@ -288,6 +300,7 @@ class PlayerBody {
   index: number
   body: BodyClass
   sensor: BodyClass
+  constraint: ConstraintClass
   moveForce: number
   shootForce: number
   keys: Keys = { ...defaultKeys }
@@ -296,12 +309,14 @@ class PlayerBody {
     index: number,
     body: BodyClass,
     sensor: BodyClass,
+    constraint: ConstraintClass,
     moveForce: number,
     shootForce: number,
   ) {
     this.index = index
     this.body = body
     this.sensor = sensor
+    this.constraint = constraint
     this.moveForce = moveForce / 10
     this.shootForce = shootForce / 10
   }
